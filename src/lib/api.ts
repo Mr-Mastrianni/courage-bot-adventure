@@ -34,6 +34,8 @@ export async function saveUserToAirtable(userData: {
   adventures?: string[];
 }) {
   try {
+    console.log("Saving user data to Airtable:", userData);
+    
     const { data, error } = await supabase.functions.invoke('airtable', {
       body: { userData }
     });
@@ -43,6 +45,7 @@ export async function saveUserToAirtable(userData: {
       throw new Error(`Error: ${error.message || 'Unknown error'}`);
     }
 
+    console.log("Airtable save response:", data);
     return data;
   } catch (error) {
     console.error("Error saving to Airtable:", error);

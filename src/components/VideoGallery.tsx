@@ -23,6 +23,13 @@ import { Upload, Play, Pause } from "lucide-react";
 import { uploadVideo } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
+// Define the response type for the uploadVideo function
+type UploadVideoResponse = {
+  success: boolean;
+  message: string;
+  videoId?: string;
+};
+
 // Sample video data
 const sampleVideos = [
   {
@@ -192,7 +199,7 @@ const VideoGallery = () => {
         uploadForm.description,
         uploadForm.category,
         uploadForm.name
-      );
+      ) as UploadVideoResponse;
 
       // Clear interval and set to 100% when done
       clearInterval(progressInterval);
@@ -220,7 +227,7 @@ const VideoGallery = () => {
         if (response.success) {
           // Add video to the list
           const newVideo = {
-            id: response.videoId as string,
+            id: response.videoId || `video_${Date.now()}`,
             title: uploadForm.title,
             thumbnail: URL.createObjectURL(uploadForm.file),
             duration: "0:00", // This would normally be extracted from the video

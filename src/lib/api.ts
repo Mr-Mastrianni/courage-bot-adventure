@@ -4,22 +4,42 @@
 // Function to send user messages to OpenAI API
 export async function sendMessageToOpenAI(message: string, history: Array<{role: string, content: string}>) {
   try {
-    // This would be replaced with your actual API call
-    // For now, returning a mock response
-    console.log("Sending to OpenAI:", { message, history });
+    // Create the payload for OpenAI API
+    const payload = {
+      model: "gpt-4o-mini", // You can change this to other models like "gpt-4o" if needed
+      messages: history.concat([{ role: "user", content: message }]),
+      temperature: 0.7,
+      max_tokens: 800,
+    };
+
+    // Send the request to OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("OpenAI API error:", errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
     
-    // In a real implementation, this would call your Edge Function
-    // that interfaces with OpenAI's API
     return {
       success: true,
-      message: "This is a placeholder response. Connect your OpenAI API key to get real responses.",
+      message: data.choices[0].message.content,
       role: "assistant"
     };
   } catch (error) {
     console.error("Error sending message to OpenAI:", error);
     return {
       success: false,
-      message: "Sorry, I couldn't process your request. Please try again.",
+      message: "Sorry, I couldn't process your request. Please check your API key and try again.",
       role: "assistant"
     };
   }

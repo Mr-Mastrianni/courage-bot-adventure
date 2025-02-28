@@ -1,8 +1,6 @@
-
 import ChatBot from "@/components/ChatBot";
 import Hero from "@/components/Hero";
 import Activities from "@/components/Activities";
-import VideoGallery from "@/components/VideoGallery";
 import Donation from "@/components/Donation";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
@@ -23,9 +21,6 @@ const Index = () => {
       
       {/* Activities Section */}
       <Activities />
-      
-      {/* Video Gallery */}
-      <VideoGallery />
       
       {/* Donation Section */}
       <Donation />

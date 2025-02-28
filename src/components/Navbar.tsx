@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
@@ -83,7 +82,7 @@ const Navbar = () => {
                   : 'bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20'
               }`}
             >
-              Book an Adventure
+              Learn About Fears
             </Button>
           </div>
 
@@ -136,7 +135,7 @@ const Navbar = () => {
               className="w-full bg-courage-600 hover:bg-courage-700"
               onClick={() => setIsMenuOpen(false)}
             >
-              Book an Adventure
+              Learn About Fears
             </Button>
           </div>
         </div>

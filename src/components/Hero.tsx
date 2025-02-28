@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
@@ -12,12 +11,25 @@ const Hero = () => {
     const text = heroTextRef.current.innerText;
     heroTextRef.current.innerHTML = '';
     
-    // Wrap each letter in a span for animation
-    [...text].forEach((char, index) => {
-      const span = document.createElement('span');
-      span.innerText = char;
-      span.style.animationDelay = `${0.05 * index}s`;
-      heroTextRef.current?.appendChild(span);
+    // Create an array for the words
+    const words = ["Courage", "Is", "One", "Adventure", "Away"];
+    
+    // Add each word with proper spacing
+    words.forEach((word, wordIndex) => {
+      // Add a space before words (except the first one)
+      if (wordIndex > 0) {
+        const space = document.createElement('span');
+        space.innerHTML = '&nbsp;';
+        heroTextRef.current?.appendChild(space);
+      }
+      
+      // Add each letter of the word with animation
+      [...word].forEach((char, charIndex) => {
+        const span = document.createElement('span');
+        span.innerText = char;
+        span.style.animationDelay = `${0.05 * (charIndex + wordIndex * 10)}s`;
+        heroTextRef.current?.appendChild(span);
+      });
     });
   }, []);
 
@@ -58,7 +70,7 @@ const Hero = () => {
             ref={heroTextRef}
             className="text-4xl sm:text-5xl md:text-6xl font-bold text-white text-shadow mb-6 hero-text"
           >
-            Courage is one adventure away.
+            Courage Is One Adventure Away
           </h1>
           
           <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.5s" }}>
@@ -70,7 +82,7 @@ const Hero = () => {
               size="lg" 
               className="bg-courage-600 hover:bg-courage-700 text-white flex items-center gap-2 px-6"
             >
-              Book an Adventure
+              Learn About Fears
             </Button>
             <Button 
               size="lg" 

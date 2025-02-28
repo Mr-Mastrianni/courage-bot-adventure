@@ -81,7 +81,9 @@ export async function logConversationToAirtable(
   }
 }
 
-// Function to schedule an appointment
+// REMOVED: Function to schedule an appointment
+// We no longer offer appointment booking as per site requirements
+/* 
 export async function scheduleAppointment(
   date: string, 
   time: string, 
@@ -111,29 +113,30 @@ export async function scheduleAppointment(
     };
   }
 }
+*/
 
-// Function to process donation
+// REMOVED: Function to process donation - No longer needed as we now use Zeffy
+/*
 export async function processDonation(
   amount: number,
   name: string,
   email: string,
   paymentMethod: string,
-  // This would be a token from a payment processor in a real implementation
   paymentToken: string
 ) {
   try {
-    // This would connect to a payment processor like Stripe
+    // This would connect to a payment processor API
     console.log("Processing donation:", { 
       amount, 
       name, 
       email,
       paymentMethod,
-      paymentToken: "XXXX" // Masking for security
+      paymentToken
     });
     
     return { 
       success: true,
-      message: "Thank you for your donation! Your support helps us empower more people to face their fears."
+      message: "Thank you for your donation! Your contribution will help others face their fears."
     };
   } catch (error) {
     console.error("Error processing donation:", error);
@@ -143,8 +146,10 @@ export async function processDonation(
     };
   }
 }
+*/
 
-// Function to upload video
+// REMOVED: Function to upload video - No longer needed as per site requirements
+/*
 export async function uploadVideo(
   file: File,
   title: string,
@@ -181,3 +186,4 @@ export async function uploadVideo(
     };
   }
 }
+*/

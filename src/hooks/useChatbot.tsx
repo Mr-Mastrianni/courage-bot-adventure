@@ -193,17 +193,6 @@ export function useChatbot() {
     }
   }, [state.messages, state.step, state.fearInfo, processMessage, toast, userId]);
 
-  // Initialize with a delayed welcome message
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (state.messages.length === 1 && !state.isOpen) {
-        setState(prev => ({ ...prev, isOpen: true }));
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [state.messages, state.isOpen]);
-
   return {
     ...state,
     sendMessage,

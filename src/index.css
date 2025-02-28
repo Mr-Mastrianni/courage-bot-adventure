@@ -96,23 +96,54 @@
   }
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* Chatbot styles */
+.chatbot-container {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-dark {
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.chatbot-open {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
 }
 
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+.chatbot-closed {
+  transform: translateY(20px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-.animate-in {
+/* Markdown styles for chatbot */
+.prose-sm h1 {
+  @apply text-lg font-bold mt-3 mb-2;
+}
+
+.prose-sm h2 {
+  @apply text-base font-bold mt-3 mb-2;
+}
+
+.prose-sm p {
+  @apply mb-2;
+}
+
+.prose-sm ul {
+  @apply list-disc pl-4 mb-2;
+}
+
+.prose-sm ol {
+  @apply list-decimal pl-4 mb-2;
+}
+
+.prose-sm li {
+  @apply mb-1;
+}
+
+.prose-sm strong {
+  @apply font-semibold text-courage-800;
+}
+
+.animate-scale-in {
   animation: fadeIn 0.5s ease-out forwards;
   opacity: 0;
 }
@@ -126,13 +157,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.safari-fix {
-  -webkit-backface-visibility: hidden;
-  -moz-backface-visibility: hidden;
-  -webkit-transform: translate3d(0, 0, 0);
-  -moz-transform: translate3d(0, 0, 0);
 }
 
 /* Custom scrollbar */
@@ -151,23 +175,6 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(155, 155, 155, 0.8);
-}
-
-.chatbot-container {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.chatbot-open {
-  transform: translateY(0);
-  opacity: 1;
-  visibility: visible;
-}
-
-.chatbot-closed {
-  transform: translateY(20px);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 /* Activity card hover effect */
@@ -214,4 +221,27 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.safari-fix {
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+  -moz-transform: translate3d(0, 0, 0);
 }

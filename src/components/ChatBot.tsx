@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Send, X, ArrowDown } from "lucide-react";
 import useChatbot from "@/hooks/useChatbot";
+import ReactMarkdown from 'react-markdown';
 
 const ChatBot = () => {
   const { 
@@ -86,7 +87,13 @@ const ChatBot = () => {
                         : 'bg-white border border-gray-200 text-gray-800'
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    {message.role === 'user' ? (
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    ) : (
+                      <div className="text-sm prose-sm max-w-none">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -110,7 +117,7 @@ const ChatBot = () => {
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me about conquering your fears..."
+                  placeholder="Type your response here..."
                   className="flex-1 resize-none"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {

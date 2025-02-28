@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sendMessageToOpenAI, logConversationToAirtable } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import ReactMarkdown from 'react-markdown';
 
 type Message = {
   id: string;
@@ -31,7 +32,7 @@ export function useChatbot() {
       {
         id: 'welcome',
         role: 'assistant',
-        content: "Hi there! I'm your Be Courageous guide. I can help you understand and face your fears. What adventure activities interest you the most?",
+        content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears. \n\n**What specific adventure activities are you most interested in trying, but might be afraid of?** \n\nSome examples include:\n* Skydiving\n* Rock climbing\n* Swimming with sharks\n* Bungee jumping\n* Zip lining\n* Deep water diving",
         timestamp: new Date(),
       },
     ],
@@ -53,7 +54,7 @@ export function useChatbot() {
         {
           id: 'welcome',
           role: 'assistant',
-          content: "Hi there! I'm your Be Courageous guide. I can help you understand and face your fears. What adventure activities interest you the most?",
+          content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears. \n\n**What specific adventure activities are you most interested in trying, but might be afraid of?** \n\nSome examples include:\n* Skydiving\n* Rock climbing\n* Swimming with sharks\n* Bungee jumping\n* Zip lining\n* Deep water diving",
           timestamp: new Date(),
         },
       ],
@@ -101,6 +102,21 @@ export function useChatbot() {
     return { nextStep, updatedFearInfo };
   }, [state.fearInfo]);
 
+  // Generate next question based on conversation step
+  const getNextQuestion = useCallback((step: ChatState['step'], fearInfo: ChatState['fearInfo']) => {
+    switch (step) {
+      case 'activities':
+        return "**Thank you for sharing.** Now, I'd like to understand more about your fears. \n\n**Could you tell me specifically what makes you afraid of these activities?** \n\nFor example:\n* Is it fear of heights?\n* Fear of water?\n* Fear of losing control?\n* Fear of getting hurt?";
+      case 'reasons':
+        return "**I appreciate your honesty.** Let's dig a little deeper. \n\n**What do you think might be the root cause of these fears?** \n\nSometimes our fears are connected to past experiences or deeper emotions. Any insights you can share would be helpful.";
+      case 'root':
+        const activities = fearInfo.activities?.join(', ') || "these activities";
+        return `**Thank you for opening up.** Based on what you've shared about ${activities}, I can offer some personalized recommendations to help you face these fears safely. \n\n**Would you like me to suggest a specific activity that might be a good first step, along with safety information?**`;
+      default:
+        return "";
+    }
+  }, []);
+
   // Send message to OpenAI API
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim()) return;
@@ -130,7 +146,7 @@ export function useChatbot() {
       }));
 
       // Add system message based on the current step
-      let systemMessage = "You are a helpful AI assistant for Be Courageous, a company that helps people face their fears through adventure activities.";
+      let systemMessage = "You are a helpful AI assistant for Be Courageous, a company that helps people face their fears through adventure activities. Format your responses using Markdown for better readability with **bold text**, bullet points, and structure. Be warm, empathetic and encouraging.";
       
       switch (nextStep) {
         case 'activities':
@@ -163,11 +179,14 @@ export function useChatbot() {
         updatedFearInfo
       );
 
+      // Get the next question to guide the conversation
+      const nextQuestion = getNextQuestion(nextStep, updatedFearInfo);
+      
       // Add assistant response to chat
       const assistantMessage: Message = {
         id: `assistant_${Date.now()}`,
         role: 'assistant',
-        content: response.message,
+        content: response.message + (nextQuestion ? '\n\n' + nextQuestion : ''),
         timestamp: new Date(),
       };
 
@@ -191,7 +210,7 @@ export function useChatbot() {
         isLoading: false,
       }));
     }
-  }, [state.messages, state.step, state.fearInfo, processMessage, toast, userId]);
+  }, [state.messages, state.step, state.fearInfo, processMessage, getNextQuestion, toast, userId]);
 
   return {
     ...state,

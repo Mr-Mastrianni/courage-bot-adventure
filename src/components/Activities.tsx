@@ -2,7 +2,7 @@
 import { useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 
 const activities = [
   {
@@ -124,14 +124,15 @@ const Activities = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-3 py-1 text-sm font-medium rounded-full bg-courage-100 text-courage-800 mb-4">
-            Our Adventures
+            Our Educational Focus
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Choose Your Challenge
+            Understand Your Fears
           </h2>
           <p className="text-lg text-gray-600">
-            Every fear conquered is a step toward personal growth. Select an activity 
-            that pushes your boundaries and discover the strength that lies beyond comfort.
+            We don't offer these activities directly, but we educate and empower you to understand 
+            and overcome your fears. Learn about these challenging activities and how confronting 
+            them can transform your life.
           </p>
         </div>
 
@@ -160,12 +161,24 @@ const Activities = () => {
                 <Button 
                   className="w-full bg-courage-600 hover:bg-courage-700 text-white flex items-center justify-center gap-2 group"
                 >
-                  Book Now
-                  <ChevronRight size={16} className="transition-transform group-hover:translate-x-1" />
+                  <InfoIcon size={16} />
+                  Learn More
                 </Button>
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-16 text-center">
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Our mission is to help you understand your fears, not to book adventures.
+            We provide education, support, and empowerment to help you face your fears on your own terms.
+          </p>
+          <Button 
+            className="bg-courage-600 hover:bg-courage-700 text-white px-6 py-3"
+          >
+            Talk With Our Fear Specialists
+          </Button>
         </div>
       </div>
     </section>

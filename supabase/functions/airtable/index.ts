@@ -17,6 +17,13 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Airtable Edge Function called");
+    console.log("Environment variables:", {
+      baseId: AIRTABLE_BASE_ID,
+      apiKeyExists: !!AIRTABLE_API_KEY,
+      apiKeyLength: AIRTABLE_API_KEY.length
+    });
+
     const { userData } = await req.json();
     
     console.log("Received user data:", userData);
@@ -46,8 +53,11 @@ serve(async (req) => {
     console.log("Using Table Name:", TABLE_NAME);
 
     // Send data to Airtable
+    const airtableUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLE_NAME)}`;
+    console.log("Airtable URL:", airtableUrl);
+
     const response = await fetch(
-      `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${TABLE_NAME}`,
+      airtableUrl,
       {
         method: 'POST',
         headers: {

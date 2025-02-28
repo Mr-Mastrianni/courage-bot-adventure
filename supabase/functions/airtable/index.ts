@@ -50,11 +50,11 @@ serve(async (req) => {
     
     // Map fields to Airtable format
     const fields = {
-      "Name": userData.name,
-      "Email": userData.email,
-      "Phone": userData.phone || "",
-      "Birthday": userData.birthday || "",
-      "Feared Adventures": Array.isArray(userData.adventures) ? userData.adventures.join(", ") : ""
+      "NAME": userData.name,
+      "EMAIL": userData.email,
+      "PHONE #": userData.phone || "",
+      "BIRTHDAY": userData.birthday || "",
+      "TOP 3 Adventures THAT THEIR SCARED OF": Array.isArray(userData.adventures) ? userData.adventures.join(", ") : ""
     };
     
     // Prepare data for Airtable API
@@ -86,11 +86,11 @@ serve(async (req) => {
     // Handle errors based on HTTP status
     if (!response.ok) {
       if (response.status === 404) {
-        throw new Error(`Table "${TABLE_NAME}" not found in Airtable base. Check the table name.`);
+        throw new Error(`Table "${TABLE_NAME}" not found in Airtable base. Check the table name. Base ID: ${AIRTABLE_BASE_ID}`);
       } else if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication failed. Check your Airtable API key permissions.`);
+        throw new Error(`Authentication failed. Check your Airtable API key permissions. Key length: ${AIRTABLE_API_KEY.length}`);
       } else if (response.status === 422) {
-        throw new Error(`Field names don't match Airtable schema. Response: ${responseText}`);
+        throw new Error(`Field names don't match Airtable schema. Check column names in the Airtable base. Response: ${responseText}`);
       } else {
         throw new Error(`Airtable API error (${response.status}): ${responseText}`);
       }

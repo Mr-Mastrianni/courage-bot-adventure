@@ -180,11 +180,19 @@
 /* Activity card hover effect */
 .activity-card {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 0; /* Fix for Safari blank space */
 }
 
 .activity-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-5px) !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Fixed height for images to prevent layout shifts */
+.activity-card img {
+  height: 192px;
+  object-fit: cover;
+  width: 100%;
 }
 
 /* Hero section animation */
@@ -202,21 +210,23 @@
   }
 }
 
-/* Staggered animation for children */
+/* Staggered animation for children - simplified to prevent blank spaces */
 .stagger-children > * {
-  opacity: 0;
-  transform: translateY(20px);
   animation: staggerIn 0.5s ease forwards;
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.35s; }
 
 @keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
@@ -244,4 +254,15 @@
   -moz-backface-visibility: hidden;
   -webkit-transform: translate3d(0, 0, 0);
   -moz-transform: translate3d(0, 0, 0);
+}
+
+/* Fix for animation blanks in grid layouts */
+.grid {
+  min-height: 0;
+  grid-auto-rows: min-content;
+}
+
+/* Prevent layout shifts */
+img {
+  display: block;
 }

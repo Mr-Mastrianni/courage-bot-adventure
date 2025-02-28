@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InfoIcon } from "lucide-react";
@@ -95,23 +95,33 @@ const Activities = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Create an intersection observer to animate cards as they enter the viewport
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          // When a card is visible
           if (entry.isIntersecting) {
-            entry.target.classList.add("animate-in");
+            // Add the animation class
+            entry.target.classList.add("opacity-100");
+            entry.target.classList.remove("opacity-0", "translate-y-8");
+            // Stop observing once the animation is triggered
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1 }
+      { 
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px" // Start animation a bit before the card enters viewport
+      }
     );
 
+    // Observe all activity cards
     const cards = document.querySelectorAll(".activity-card");
     cards.forEach((card) => {
       observer.observe(card);
     });
 
+    // Cleanup observer on component unmount
     return () => {
       cards.forEach((card) => {
         observer.unobserve(card);
@@ -138,12 +148,16 @@ const Activities = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {activities.map((activity) => (
-            <Card key={activity.id} className="overflow-hidden border border-gray-200 activity-card opacity-0">
+            <Card 
+              key={activity.id} 
+              className="overflow-hidden border border-gray-200 activity-card transform transition-all duration-500 opacity-0 translate-y-8"
+            >
               <div className="aspect-w-16 aspect-h-10 relative">
                 <img
                   src={activity.image}
                   alt={activity.title}
                   className="object-cover w-full h-48"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-4">

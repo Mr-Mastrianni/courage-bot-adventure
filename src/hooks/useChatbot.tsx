@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { sendMessageToOpenAI, logConversationToAirtable } from '@/lib/api';
+import { sendMessageToOpenAI, logConversationToAirtable, saveUserToAirtable } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 
@@ -11,16 +11,25 @@ type Message = {
   timestamp: Date;
 };
 
+type UserData = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birthday?: string;
+  adventures?: string[];
+};
+
 type ChatState = {
   isOpen: boolean;
   messages: Message[];
   isLoading: boolean;
+  userData: UserData;
   fearInfo: {
     activities?: string[];
     reasons?: string;
     rootCause?: string;
   };
-  step: 'initial' | 'activities' | 'reasons' | 'root' | 'recommendation';
+  step: 'initial' | 'name' | 'email' | 'phone' | 'birthday' | 'adventures' | 'confirmation' | 'completed';
 };
 
 export function useChatbot() {
@@ -32,13 +41,14 @@ export function useChatbot() {
       {
         id: 'welcome',
         role: 'assistant',
-        content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears. \n\n**What specific adventure activities are you most interested in trying, but might be afraid of?** \n\nSome examples include:\n* Skydiving\n* Rock climbing\n* Swimming with sharks\n* Bungee jumping\n* Zip lining\n* Deep water diving",
+        content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears, but first I'd like to get to know you better. \n\n**What's your name?**",
         timestamp: new Date(),
       },
     ],
     isLoading: false,
+    userData: {},
     fearInfo: {},
-    step: 'initial',
+    step: 'name',
   });
 
   // Toggle chatbot visibility
@@ -54,64 +64,97 @@ export function useChatbot() {
         {
           id: 'welcome',
           role: 'assistant',
-          content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears. \n\n**What specific adventure activities are you most interested in trying, but might be afraid of?** \n\nSome examples include:\n* Skydiving\n* Rock climbing\n* Swimming with sharks\n* Bungee jumping\n* Zip lining\n* Deep water diving",
+          content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears, but first I'd like to get to know you better. \n\n**What's your name?**",
           timestamp: new Date(),
         },
       ],
       isLoading: false,
+      userData: {},
       fearInfo: {},
-      step: 'initial',
+      step: 'name',
     });
   }, []);
 
   // Process the message and determine the next step in the conversation flow
-  const processMessage = useCallback((message: string, currentStep: ChatState['step']) => {
+  const processMessage = useCallback((message: string, currentStep: ChatState['step'], currentUserData: UserData) => {
     let nextStep = currentStep;
-    let updatedFearInfo = { ...state.fearInfo };
+    const updatedUserData = { ...currentUserData };
 
-    // Simple state machine to guide the conversation
+    // Simple state machine to guide the conversation for user data collection
     switch (currentStep) {
-      case 'initial':
-        nextStep = 'activities';
+      case 'name':
+        updatedUserData.name = message.trim();
+        nextStep = 'email';
         break;
-      case 'activities':
+      case 'email':
+        updatedUserData.email = message.trim();
+        nextStep = 'phone';
+        break;
+      case 'phone':
+        updatedUserData.phone = message.trim();
+        nextStep = 'birthday';
+        break;
+      case 'birthday':
+        updatedUserData.birthday = message.trim();
+        nextStep = 'adventures';
+        break;
+      case 'adventures':
         // Extract potentially feared activities from user message
         const activities = ['skydiving', 'hang gliding', 'rock climbing', 'swimming with sharks', 
                            'base jumping', 'kayaking', 'wing walking', 'bungee jumping', 
                            'zip lines', 'rope swings', 'swimming with whales', 'deep water diving'];
         
+        // Try to extract mentioned activities
         const mentionedActivities = activities.filter(activity => 
           message.toLowerCase().includes(activity.toLowerCase()));
         
-        updatedFearInfo.activities = mentionedActivities.length > 0 ? mentionedActivities : undefined;
-        nextStep = 'reasons';
+        // If none found, just save the raw input
+        updatedUserData.adventures = mentionedActivities.length > 0 
+          ? mentionedActivities 
+          : message.split(',').map(item => item.trim());
+        
+        nextStep = 'confirmation';
         break;
-      case 'reasons':
-        updatedFearInfo.reasons = message;
-        nextStep = 'root';
+      case 'confirmation':
+        if (message.toLowerCase().includes('yes') || message.toLowerCase().includes('correct')) {
+          nextStep = 'completed';
+          // Save to Airtable here, but we'll do it in the sendMessage function
+        } else {
+          // If the user says the information is not correct, go back to the beginning
+          updatedUserData.name = undefined;
+          updatedUserData.email = undefined;
+          updatedUserData.phone = undefined;
+          updatedUserData.birthday = undefined;
+          updatedUserData.adventures = undefined;
+          nextStep = 'name';
+        }
         break;
-      case 'root':
-        updatedFearInfo.rootCause = message;
-        nextStep = 'recommendation';
-        break;
-      case 'recommendation':
-        // After recommendation, stay in this state for continued conversation
+      case 'completed':
+        // After saving to Airtable, continue with normal conversation
         break;
     }
 
-    return { nextStep, updatedFearInfo };
-  }, [state.fearInfo]);
+    return { nextStep, updatedUserData };
+  }, []);
 
   // Generate next question based on conversation step
-  const getNextQuestion = useCallback((step: ChatState['step'], fearInfo: ChatState['fearInfo']) => {
+  const getNextQuestion = useCallback((step: ChatState['step'], userData: UserData) => {
     switch (step) {
-      case 'activities':
-        return "**Thank you for sharing.** Now, I'd like to understand more about your fears. \n\n**Could you tell me specifically what makes you afraid of these activities?** \n\nFor example:\n* Is it fear of heights?\n* Fear of water?\n* Fear of losing control?\n* Fear of getting hurt?";
-      case 'reasons':
-        return "**I appreciate your honesty.** Let's dig a little deeper. \n\n**What do you think might be the root cause of these fears?** \n\nSometimes our fears are connected to past experiences or deeper emotions. Any insights you can share would be helpful.";
-      case 'root':
-        const activities = fearInfo.activities?.join(', ') || "these activities";
-        return `**Thank you for opening up.** Based on what you've shared about ${activities}, I can offer some personalized recommendations to help you face these fears safely. \n\n**Would you like me to suggest a specific activity that might be a good first step, along with safety information?**`;
+      case 'name':
+        return "**What's your name?**";
+      case 'email':
+        return `**Thanks, ${userData.name}!** What email address can we reach you at?`;
+      case 'phone':
+        return "**Great!** What's your phone number? (This is optional, you can say 'skip' if you prefer not to share it)";
+      case 'birthday':
+        return "**Thanks for that!** When is your birthday? (Format: MM/DD/YYYY, or you can say 'skip')";
+      case 'adventures':
+        return "**Now, I'd love to know about your fears.** What are the top 3 adventure activities you're most scared of but interested in trying?";
+      case 'confirmation':
+        const adventures = userData.adventures?.join(', ') || "None specified";
+        return `**Thank you for sharing!** Here's what I've got:\n\n- **Name**: ${userData.name}\n- **Email**: ${userData.email}\n- **Phone**: ${userData.phone || "Not provided"}\n- **Birthday**: ${userData.birthday || "Not provided"}\n- **Top Feared Adventures**: ${adventures}\n\n**Is this information correct?** (Yes/No)`;
+      case 'completed':
+        return "**Great! I've saved your information.** Now, let's talk more about your fears. What specifically makes you afraid of these activities?";
       default:
         return "";
     }
@@ -137,7 +180,24 @@ export function useChatbot() {
 
     try {
       // Process the message to determine conversation flow
-      const { nextStep, updatedFearInfo } = processMessage(message, state.step);
+      const { nextStep, updatedUserData } = processMessage(message, state.step, state.userData);
+
+      // Save to Airtable if we've reached the confirmation step and user confirmed
+      if (state.step === 'confirmation' && nextStep === 'completed') {
+        const saveResult = await saveUserToAirtable(updatedUserData);
+        if (!saveResult.success) {
+          toast({
+            title: "Error",
+            description: saveResult.message || "Failed to save your information. Please try again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Your information has been saved successfully!",
+          });
+        }
+      }
 
       // Format history for OpenAI
       const history = state.messages.map(msg => ({
@@ -149,17 +209,26 @@ export function useChatbot() {
       let systemMessage = "You are a helpful AI assistant for Be Courageous, a company that helps people face their fears through adventure activities. Format your responses using Markdown for better readability with **bold text**, bullet points, and structure. Be warm, empathetic and encouraging.";
       
       switch (nextStep) {
-        case 'activities':
-          systemMessage += " Ask the user which of these activities they're most afraid of: skydiving, hang gliding, rock climbing, swimming with sharks, base jumping, kayaking, wing walking, bungee jumping, zip lines, rope swings, swimming with whales, or deep water diving.";
+        case 'name':
+          systemMessage += " Ask for the user's name in a friendly way.";
           break;
-        case 'reasons':
-          systemMessage += " Ask the user why they're afraid of these activities. Dig deeper into their specific fears.";
+        case 'email':
+          systemMessage += " Ask for the user's email address in a friendly way.";
           break;
-        case 'root':
-          systemMessage += " Ask the user to reflect on the root cause of their fear. Help them understand what underlying fears might be present.";
+        case 'phone':
+          systemMessage += " Ask for the user's phone number, but mention it's optional.";
           break;
-        case 'recommendation':
-          systemMessage += " Based on their fears, recommend a specific activity that would help them face their fears in a safe, controlled way. Include specific safety information about the activity.";
+        case 'birthday':
+          systemMessage += " Ask for the user's birthday in MM/DD/YYYY format, but mention it's optional.";
+          break;
+        case 'adventures':
+          systemMessage += " Ask the user to share their top 3 adventure activities they're scared of but interested in trying.";
+          break;
+        case 'confirmation':
+          systemMessage += " Show the user the information they've provided and ask them to confirm if it's correct.";
+          break;
+        case 'completed':
+          systemMessage += " Thank the user for sharing their information. Now focus on understanding their fears related to the activities they mentioned.";
           break;
       }
 
@@ -176,11 +245,11 @@ export function useChatbot() {
       await logConversationToAirtable(
         [...history, { role: 'user', content: message }],
         userId,
-        updatedFearInfo
+        state.fearInfo
       );
 
       // Get the next question to guide the conversation
-      const nextQuestion = getNextQuestion(nextStep, updatedFearInfo);
+      const nextQuestion = getNextQuestion(nextStep, updatedUserData);
       
       // Add assistant response to chat
       const assistantMessage: Message = {
@@ -194,7 +263,7 @@ export function useChatbot() {
         ...prev,
         messages: [...prev.messages, assistantMessage],
         isLoading: false,
-        fearInfo: updatedFearInfo,
+        userData: updatedUserData,
         step: nextStep,
       }));
     } catch (error) {
@@ -210,7 +279,7 @@ export function useChatbot() {
         isLoading: false,
       }));
     }
-  }, [state.messages, state.step, state.fearInfo, processMessage, getNextQuestion, toast, userId]);
+  }, [state.messages, state.step, state.userData, state.fearInfo, processMessage, getNextQuestion, toast, userId]);
 
   return {
     ...state,

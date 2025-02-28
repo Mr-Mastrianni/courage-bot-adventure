@@ -25,6 +25,34 @@ export async function sendMessageToOpenAI(message: string, history: Array<{role:
   }
 }
 
+// Function to save user data to Airtable
+export async function saveUserToAirtable(userData: {
+  name: string;
+  email: string;
+  phone?: string;
+  birthday?: string;
+  adventures?: string[];
+}) {
+  try {
+    const { data, error } = await supabase.functions.invoke('airtable', {
+      body: { userData }
+    });
+
+    if (error) {
+      console.error("Supabase Edge Function error:", error);
+      throw new Error(`Error: ${error.message || 'Unknown error'}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error saving to Airtable:", error);
+    return {
+      success: false,
+      message: "Sorry, we couldn't save your information. Please try again."
+    };
+  }
+}
+
 // Function to log conversation to Airtable
 export async function logConversationToAirtable(
   conversation: Array<{role: string, content: string}>, 

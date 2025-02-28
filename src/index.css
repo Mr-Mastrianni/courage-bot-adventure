@@ -160,11 +160,13 @@
 .chatbot-open {
   transform: translateY(0);
   opacity: 1;
+  visibility: visible;
 }
 
 .chatbot-closed {
   transform: translateY(20px);
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
 }
 

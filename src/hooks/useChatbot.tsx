@@ -180,7 +180,7 @@ export function useChatbot() {
 
     try {
       // Process the message to determine conversation flow
-      const { nextStep, updatedUserData } = processMessage(message, state.step, state.userData);
+      let { nextStep, updatedUserData } = processMessage(message, state.step, state.userData);
 
       // Save to Airtable if we've reached the confirmation step and user confirmed
       if (state.step === 'confirmation' && nextStep === 'completed' && 

@@ -183,8 +183,19 @@ export function useChatbot() {
       const { nextStep, updatedUserData } = processMessage(message, state.step, state.userData);
 
       // Save to Airtable if we've reached the confirmation step and user confirmed
-      if (state.step === 'confirmation' && nextStep === 'completed') {
-        const saveResult = await saveUserToAirtable(updatedUserData);
+      if (state.step === 'confirmation' && nextStep === 'completed' && 
+          updatedUserData.name && updatedUserData.email) { // Check required fields exist
+        
+        // Cast the userData to the required type since we've checked the required fields
+        const userData = {
+          name: updatedUserData.name,
+          email: updatedUserData.email,
+          phone: updatedUserData.phone,
+          birthday: updatedUserData.birthday,
+          adventures: updatedUserData.adventures
+        };
+        
+        const saveResult = await saveUserToAirtable(userData);
         if (!saveResult.success) {
           toast({
             title: "Error",
@@ -197,6 +208,15 @@ export function useChatbot() {
             description: "Your information has been saved successfully!",
           });
         }
+      } else if (state.step === 'confirmation' && nextStep === 'completed') {
+        // Handle the case where required fields are missing
+        toast({
+          title: "Error",
+          description: "Missing required information. Please provide your name and email.",
+          variant: "destructive",
+        });
+        // Reset to name step if information is missing
+        nextStep = 'name';
       }
 
       // Format history for OpenAI

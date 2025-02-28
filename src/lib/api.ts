@@ -1,45 +1,25 @@
 
 // API utilities for chatbot, donations, and video uploads
+import { supabase } from "@/integrations/supabase/client";
 
-// Function to send user messages to OpenAI API
+// Function to send user messages to OpenAI API via Supabase Edge Function
 export async function sendMessageToOpenAI(message: string, history: Array<{role: string, content: string}>) {
   try {
-    // Create the payload for OpenAI API
-    const payload = {
-      model: "gpt-4o-mini", // You can change this to other models like "gpt-4o" if needed
-      messages: history.concat([{ role: "user", content: message }]),
-      temperature: 0.7,
-      max_tokens: 800,
-    };
-
-    // Send the request to OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-      },
-      body: JSON.stringify(payload),
+    const { data, error } = await supabase.functions.invoke('chat', {
+      body: { message, history }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenAI API error:", errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    if (error) {
+      console.error("Supabase Edge Function error:", error);
+      throw new Error(`Error: ${error.message || 'Unknown error'}`);
     }
 
-    const data = await response.json();
-    
-    return {
-      success: true,
-      message: data.choices[0].message.content,
-      role: "assistant"
-    };
+    return data;
   } catch (error) {
-    console.error("Error sending message to OpenAI:", error);
+    console.error("Error sending message:", error);
     return {
       success: false,
-      message: "Sorry, I couldn't process your request. Please check your API key and try again.",
+      message: "Sorry, I couldn't process your request. Please try again.",
       role: "assistant"
     };
   }

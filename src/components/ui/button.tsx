@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -18,11 +18,20 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        courage: "bg-courage-600 hover:bg-courage-700 text-white",
+        vitality: "bg-vitality-500 hover:bg-vitality-600 text-white",
+        growth: "bg-growth-500 hover:bg-growth-600 text-white",
+        calmness: "bg-calmness-500 hover:bg-calmness-600 text-white",
+        courageSoft: "bg-courage-100 text-courage-800 hover:bg-courage-200",
+        vitalitySoft: "bg-vitality-100 text-vitality-800 hover:bg-vitality-200",
+        growthSoft: "bg-growth-100 text-growth-800 hover:bg-growth-200",
+        calmnessSoft: "bg-calmness-100 text-calmness-800 hover:bg-calmness-200",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-md px-10 py-3 text-lg",
         icon: "h-10 w-10",
       },
     },

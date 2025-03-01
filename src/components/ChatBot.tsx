@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,6 +114,8 @@ const ChatBot = () => {
             <form onSubmit={handleSubmit} className="border-t p-4 bg-white">
               <div className="flex space-x-2">
                 <Textarea
+                  id="chatInput"
+                  name="chatInput"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Type your response here..."

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet">
+  <!-- Circle logo -->
+  <g transform="translate(70, 100) scale(0.7)">
+    <circle cx="0" cy="0" r="80" fill="#444444"/>
+    <path d="M0,-80 A80,80 0 0,1 69.3,-40 L0,0 Z" fill="#b30000"/>
+  </g>
+  
+  <!-- DARE text with glow effect -->
+  <g transform="translate(320, 100) scale(1.1)">
+    <!-- Red glow filter -->
+    <defs>
+      <filter id="redGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="8" result="blur"/>
+        <feFlood flood-color="#ff0000" flood-opacity="0.5" result="color"/>
+        <feComposite in="color" in2="blur" operator="in" result="glow"/>
+        <feMerge>
+          <feMergeNode in="glow"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    
+    <!-- DARE Text -->
+    <text x="0" y="0" filter="url(#redGlow)" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="90" fill="#333333">DARE</text>
+  </g>
+  
+  <!-- BE COURAGEOUS text -->
+  <g transform="translate(320, 170)">
+    <text x="0" y="0" text-anchor="middle" font-family="Arial, sans-serif" font-weight="normal" font-size="24" fill="#444444">BE COURAGEOUS</text>
+    <line x1="-130" y1="10" x2="-50" y2="10" stroke="#444444" stroke-width="2"/>
+    <line x1="50" y1="10" x2="130" y2="10" stroke="#444444" stroke-width="2"/>
+  </g>
+</svg>

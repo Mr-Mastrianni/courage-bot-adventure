@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -387,10 +386,12 @@ const VideoGallery = () => {
             <div className="space-y-2">
               <Label htmlFor="category">Category*</Label>
               <Select
+                id="category"
+                name="category"
                 value={uploadForm.category}
                 onValueChange={handleCategoryChange}
               >
-                <SelectTrigger>
+                <SelectTrigger id="categoryTrigger">
                   <SelectValue placeholder="Select activity type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -424,6 +425,8 @@ const VideoGallery = () => {
               >
                 <input
                   type="file"
+                  id="videoFile"
+                  name="videoFile"
                   ref={fileInputRef}
                   className="hidden"
                   accept="video/*"

@@ -1,6 +1,7 @@
-
 // API utilities for chatbot, donations, and video uploads
-import { supabase } from "@/integrations/supabase/client";
+import { User } from '@supabase/supabase-js';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from "@/lib/supabase";
 
 // Function to send user messages to OpenAI API via Supabase Edge Function
 export async function sendMessageToOpenAI(message: string, history: Array<{role: string, content: string}>) {

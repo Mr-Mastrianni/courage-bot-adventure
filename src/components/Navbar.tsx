@@ -80,12 +80,12 @@ const Navbar = () => {
       ? 'bg-background/95 backdrop-blur-md shadow-md py-2' 
       : 'bg-background/80 backdrop-blur-sm py-3'
     } 
-    z-[100]
+    z-[1000]
   `;
 
   return (
     <header className={navbarClasses}>
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative">
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
           <Link
@@ -167,7 +167,7 @@ const Navbar = () => {
                 </Link>
                 
                 {/* Theme Switcher */}
-                <div className="relative z-10">
+                <div className="relative z-[1001]">
                   <ThemeSwitcher />
                 </div>
                 
@@ -187,7 +187,7 @@ const Navbar = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-56 z-[9999] mt-1">
                     <div className="flex items-center justify-start gap-2 p-2">
                       <div className="flex flex-col space-y-1 leading-none">
                         {user.user_metadata?.fullName && (
@@ -227,7 +227,7 @@ const Navbar = () => {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {/* Only show theme switcher in mobile dropdown */}
-                    <div className="p-2 flex items-center justify-between">
+                    <div className="p-2 flex items-center justify-between z-[1001]">
                       <span className="text-sm">Theme</span>
                       <ThemeSwitcher />
                     </div>
@@ -276,7 +276,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center space-x-2">
+          <div className="md:hidden flex items-center space-x-2 z-[1001]">
             {user && (
               <div className={`${isMenuOpen ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}>
                 <DropdownMenu>
@@ -295,7 +295,7 @@ const Navbar = () => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-48 z-[9999] mt-1">
                     <DropdownMenuItem 
                       className="cursor-pointer"
                       onClick={(e) => {
@@ -323,7 +323,7 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               aria-label="Toggle Menu"
-              className={`relative z-20 ${isScrolled ? 'text-foreground' : 'text-white'}`}
+              className={`relative z-[1001] ${isScrolled ? 'text-foreground' : 'text-white'}`}
               onClick={toggleMenu}
             >
               {isMenuOpen ? (
@@ -336,7 +336,7 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           <div 
-            className={`md:hidden transition-all duration-300 overflow-hidden ${
+            className={`md:hidden transition-all duration-300 overflow-hidden fixed ${isScrolled ? 'top-[50px]' : 'top-[60px]'} left-0 right-0 z-[150] ${
               isMenuOpen 
                 ? 'max-h-screen opacity-100 pb-4 bg-background border-b' 
                 : 'max-h-0 opacity-0'

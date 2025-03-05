@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme, ThemePreferences } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -46,11 +46,12 @@ const ageRanges = [
 
 const Profile: React.FC = () => {
   const { user, updateProfile, getUserProfile, deleteAccount, signOut } = useAuth();
-  const { theme, colorScheme } = useTheme();
+  const { theme } = useTheme();
   const { dashboardLayout, updateDashboardLayout } = useUserPreferences();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -65,82 +66,131 @@ const Profile: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>('basic');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
-  
+  const [showCompletionIndicator, setShowCompletionIndicator] = useState(true);
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    
-    async function getProfile() {
+    const loadUserProfile = async () => {
+      if (!user) return;
+
       try {
-        setLoading(true);
+        setIsLoading(true);
+        setError(null);
+        console.log('Loading user profile data...');
         
-        // Set email from auth user
-        setEmail(user.email || '');
-        
-        // Try to get full name from user metadata first
-        if (user.user_metadata?.fullName) {
-          setFullName(user.user_metadata.fullName);
+        // Set the email from the user object immediately
+        if (user.email) {
+          console.log('Setting email from user object:', user.email);
+          setEmail(user.email);
         }
         
-        if (user.user_metadata?.avatar_url) {
-          setAvatarUrl(user.user_metadata.avatar_url);
-        }
+        // Set a timeout to prevent getting stuck indefinitely
+        const timeoutId = setTimeout(() => {
+          console.error('Profile data loading timed out');
+          setError('Loading timed out. Please refresh the page.');
+          setIsLoading(false);
+        }, 8000); // Reduced timeout
         
-        // Get profile data from user_profiles table using the new method
-        const { data, error } = await getUserProfile();
+        // Simplified profile loading - single attempt for speed
+        const result = await getUserProfile();
+        const profileData = result.data;
+        const profileError = result.error;
+        
+        // Clear timeout since we got a response
+        clearTimeout(timeoutId);
+        
+        if (profileError) {
+          console.error('Error loading profile:', profileError);
           
-        if (error) {
-          console.error('Error fetching profile', error);
-          throw new Error(error);
+          // Check if we're still logged in
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            console.error('Session lost during profile load, redirecting to login');
+            // Redirect to login instead of showing error
+            navigate('/login');
+            return;
+          }
+          
+          setError(`Failed to load profile data: ${profileError}`);
+          setIsLoading(false);
+          return;
         }
         
-        if (data) {
-          setFullName(data.full_name || '');
-          setAvatarUrl(data.avatar_url || null);
-          setDateOfBirth(data.date_of_birth || null);
-          setKeyFears(data.key_fears || []);
-          setExperienceLevel(data.experience_level || null);
-          setChallengeIntensity(data.challenge_intensity || null);
-          setLearningStyle(data.learning_style || null);
-          setBio(data.bio || '');
-          setLocation(data.location || '');
+        if (!profileData) {
+          console.error('No profile data returned');
+          
+          // Check if we're still logged in
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            console.error('Session lost during profile load, redirecting to login');
+            // Redirect to login instead of showing error
+            navigate('/login');
+            return;
+          }
+          
+          setError('No profile data found. Please try again.');
+          setIsLoading(false);
+          return;
         }
+        
+        console.log('Profile data loaded:', profileData);
+        
+        // Set state with profile data
+        setFullName(profileData.full_name || '');
+        setAvatarUrl(profileData.avatar_url);
+        setDateOfBirth(profileData.date_of_birth || '');
+        setKeyFears(profileData.key_fears || []);
+        setExperienceLevel(profileData.experience_level || 'beginner');
+        setChallengeIntensity(profileData.challenge_intensity || 'moderate');
+        setLearningStyle(profileData.learning_style || 'visual');
+        setBio(profileData.bio || '');
+        setLocation(profileData.location || '');
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error loading user data!', error);
-        setMessage({ 
-          text: 'Failed to load profile data. Please try again later.', 
-          type: 'error' 
-        });
-      } finally {
-        setLoading(false);
+        console.error('Unexpected error loading profile:', error);
+        
+        // Check if we're still logged in
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            console.error('Session lost during profile load error handling, redirecting to login');
+            // Redirect to login instead of showing error
+            navigate('/login');
+            return;
+          }
+        } catch (sessionError) {
+          console.error('Error checking session during error handling:', sessionError);
+          // Continue with normal error handling
+        }
+        
+        setError('An unexpected error occurred. Please try again.');
+        setIsLoading(false);
       }
-    }
+    };
     
-    getProfile();
-  }, [user, navigate, getUserProfile]);
-  
+    loadUserProfile();
+  }, [user, getUserProfile, navigate]);
+
   async function handleUpdateProfile() {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setMessage({ text: '', type: '' });
-      
+
       if (!user) {
         navigate('/login');
         return;
       }
-      
+
       if (!fullName.trim()) {
         setMessage({ text: 'Full name is required', type: 'error' });
-        setLoading(false);
+        setIsLoading(false);
         return;
       }
-      
+
       const { success, error } = await updateProfile({
         full_name: fullName.trim(),
         avatar_url: avatarUrl,
@@ -152,56 +202,47 @@ const Profile: React.FC = () => {
         bio: bio.trim() || null,
         location: location.trim() || null,
       });
-      
+
       if (!success) {
         throw new Error(error || 'Failed to update profile');
       }
-      
-      setMessage({ 
-        text: 'Profile updated successfully!', 
-        type: 'success' 
-      });
+
+      setMessage({ text: 'Profile updated successfully!', type: 'success' });
     } catch (error: unknown) {
       console.error('Error updating profile!', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Error updating profile. Please try again.';
-      
-      setMessage({ 
-        text: errorMessage, 
-        type: 'error' 
-      });
+
+      setMessage({ text: errorMessage, type: 'error' });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
-  
+
   // Handle account deletion
   async function handleDeleteAccount() {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setMessage({ text: '', type: '' });
-      
+
       if (!user) {
         navigate('/login');
         return;
       }
-      
+
       if (deleteConfirmText !== 'DELETE') {
-        setMessage({ 
-          text: 'Please type DELETE to confirm account deletion', 
-          type: 'error' 
-        });
-        setLoading(false);
+        setMessage({ text: 'Please type DELETE to confirm account deletion', type: 'error' });
+        setIsLoading(false);
         return;
       }
-      
+
       const { success, error, warning } = await deleteAccount();
-      
+
       if (!success) {
         throw new Error(error || 'Failed to delete account');
       }
-      
+
       if (warning) {
         // Show warning if only profile data was deleted
         toast({
@@ -216,15 +257,15 @@ const Profile: React.FC = () => {
           description: 'Your account has been successfully deleted.',
         });
       }
-      
+
       // Explicitly perform a full sign out process
       try {
         // Clear any local storage
         localStorage.removeItem('supabase.auth.token');
-        
+
         // Sign out from Supabase
         await signOut();
-        
+
         // Force navigation to home page
         window.location.href = '/';
       } catch (signOutError) {
@@ -234,18 +275,15 @@ const Profile: React.FC = () => {
       }
     } catch (error: unknown) {
       console.error('Error deleting account!', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
+      const errorMessage = error instanceof Error
+        ? error.message
         : 'Error deleting account. Please try again.';
-      
-      setMessage({ 
-        text: errorMessage, 
-        type: 'error' 
-      });
-      setLoading(false);
+
+      setMessage({ text: errorMessage, type: 'error' });
+      setIsLoading(false);
     }
   }
-  
+
   // Prepare profile data for the completion indicator
   const profileData = {
     full_name: fullName,
@@ -258,46 +296,74 @@ const Profile: React.FC = () => {
     bio,
     location,
   };
-  
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="max-w-2xl mx-auto p-6 bg-background rounded-lg shadow-md my-8">
         <h1 className="text-2xl font-bold mb-4 text-foreground">Your Profile</h1>
-        
+
         {/* Profile Completion Indicator */}
-        <ProfileCompletionIndicator profile={profileData} />
-        
+        {showCompletionIndicator && (
+          <ProfileCompletionIndicator
+            profile={profileData}
+            onClose={() => setShowCompletionIndicator(false)}
+          />
+        )}
+
         {/* Message display */}
         {message.text && (
           <div className={`p-3 mb-4 rounded ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
             {message.text}
           </div>
         )}
-        
+
         {/* Basic Information Section */}
         <div className="mb-4 border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="flex justify-between items-center p-4 bg-muted cursor-pointer"
             onClick={() => toggleSection('basic')}
           >
             <h2 className="text-lg font-medium text-foreground">Basic Information</h2>
             {expandedSection === 'basic' ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSection === 'basic' && (
             <div className="p-4 space-y-4">
               <div className="mb-6 flex justify-center">
-                <Avatar 
-                  url={avatarUrl} 
-                  size={150} 
+                <Avatar
+                  url={avatarUrl}
+                  size={150}
                   onUpload={(url) => {
+                    console.log('Avatar uploaded, new URL:', url);
                     setAvatarUrl(url);
-                    setMessage({ text: 'Avatar uploaded! Click Update Profile to save changes.', type: 'success' });
-                  }} 
+
+                    // Save the avatar URL immediately to ensure it persists
+                    if (user) {
+                      // Update the profile with just the avatar URL
+                      updateProfile({
+                        full_name: fullName || '',
+                        avatar_url: url,
+                        date_of_birth: dateOfBirth,
+                        key_fears: keyFears,
+                        experience_level: experienceLevel,
+                        challenge_intensity: challengeIntensity,
+                        learning_style: learningStyle,
+                        bio: bio || '',
+                        location: location || '',
+                      }).then(({ success, error }) => {
+                        if (success) {
+                          setMessage({ text: 'Avatar updated successfully!', type: 'success' });
+                        } else {
+                          console.error('Failed to save avatar:', error);
+                          setMessage({ text: `Failed to save avatar: ${error}`, type: 'error' });
+                        }
+                      });
+                    }
+                  }}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Full Name *</label>
                 <input
@@ -310,7 +376,7 @@ const Profile: React.FC = () => {
                   placeholder="Enter your full name"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Email</label>
                 <input
@@ -325,7 +391,7 @@ const Profile: React.FC = () => {
                   Email cannot be changed. This is your login email.
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Date of Birth</label>
                 <div className="relative">
@@ -346,7 +412,7 @@ const Profile: React.FC = () => {
                   </p>
                 )}
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Location</label>
                 <input
@@ -362,17 +428,17 @@ const Profile: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* Courage Profile Section */}
         <div className="mb-4 border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="flex justify-between items-center p-4 bg-muted cursor-pointer"
             onClick={() => toggleSection('courage')}
           >
             <h2 className="text-lg font-medium text-foreground">Courage Profile</h2>
             {expandedSection === 'courage' ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSection === 'courage' && (
             <div className="p-4 space-y-4">
               <div>
@@ -385,7 +451,7 @@ const Profile: React.FC = () => {
                   Select or enter fears you want to overcome
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Experience Level</label>
                 <select
@@ -403,7 +469,7 @@ const Profile: React.FC = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Challenge Intensity Preference</label>
                 <select
@@ -421,7 +487,7 @@ const Profile: React.FC = () => {
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Learning Style</label>
                 <select
@@ -442,10 +508,10 @@ const Profile: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* UI Personalization Section */}
         <div className="mb-4 border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="flex justify-between items-center p-4 bg-muted cursor-pointer"
             onClick={() => toggleSection('personalization')}
           >
@@ -455,7 +521,7 @@ const Profile: React.FC = () => {
             </h2>
             {expandedSection === 'personalization' ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSection === 'personalization' && (
             <div className="p-4 space-y-6">
               {/* Theme Settings */}
@@ -464,29 +530,19 @@ const Profile: React.FC = () => {
                 <div className="p-4 bg-muted/50 rounded-md">
                   <div className="flex flex-col gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">App Theme</label>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Theme Mode</label>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm">Current theme: <span className="font-medium capitalize">{theme}</span></span>
+                        <span className="text-sm">Current mode: <span className="font-medium capitalize">{theme.mode}</span></span>
                         <ThemeSwitcher />
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">
                         Choose between light, dark, or system theme
                       </p>
                     </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">Color Scheme</label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">Current scheme: <span className="font-medium capitalize">{colorScheme}</span></span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Change color scheme in the theme switcher
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* Dashboard Layout */}
               <div>
                 <h3 className="text-md font-medium text-foreground mb-2 flex items-center gap-2">
@@ -496,14 +552,14 @@ const Profile: React.FC = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Customize your dashboard view and widget preferences.
                 </p>
-                
+
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-1">
                       Dashboard View
                     </label>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={() => updateDashboardLayout({...dashboardLayout, viewMode: 'grid'})}
                         className={`px-3 py-2 border rounded-md text-sm ${dashboardLayout.viewMode === 'grid' 
                           ? 'bg-primary text-primary-foreground border-primary' 
@@ -511,7 +567,7 @@ const Profile: React.FC = () => {
                       >
                         Grid View
                       </button>
-                      <button 
+                      <button
                         onClick={() => updateDashboardLayout({...dashboardLayout, viewMode: 'list'})}
                         className={`px-3 py-2 border rounded-md text-sm ${dashboardLayout.viewMode === 'list' 
                           ? 'bg-primary text-primary-foreground border-primary' 
@@ -521,7 +577,7 @@ const Profile: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-1">
                       Widget Visibility
@@ -549,7 +605,7 @@ const Profile: React.FC = () => {
                           Show Activity Tracker
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <input
                           type="checkbox"
@@ -572,7 +628,7 @@ const Profile: React.FC = () => {
                           Show Progress Charts
                         </label>
                       </div>
-                      
+
                       <div className="flex items-center">
                         <input
                           type="checkbox"
@@ -602,17 +658,17 @@ const Profile: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* About Me Section */}
         <div className="mb-4 border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="flex justify-between items-center p-4 bg-muted cursor-pointer"
             onClick={() => toggleSection('about')}
           >
             <h2 className="text-lg font-medium text-foreground">About Me</h2>
             {expandedSection === 'about' ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSection === 'about' && (
             <div className="p-4 space-y-4">
               <div>
@@ -630,10 +686,10 @@ const Profile: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         {/* Account Management Section */}
         <div className="mb-4 border border-border rounded-lg overflow-hidden">
-          <div 
+          <div
             className="flex justify-between items-center p-4 bg-muted cursor-pointer"
             onClick={() => toggleSection('account')}
           >
@@ -643,7 +699,7 @@ const Profile: React.FC = () => {
             </h2>
             {expandedSection === 'account' ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </div>
-          
+
           {expandedSection === 'account' && (
             <div className="p-4 space-y-4">
               <div className="bg-red-50 p-4 rounded-md border border-red-200">
@@ -651,7 +707,7 @@ const Profile: React.FC = () => {
                 <p className="text-sm text-red-600 mb-4">
                   Warning: This action cannot be undone. Deleting your account will permanently remove all your data, including profile information, fear assessments, progress data, and journal entries.
                 </p>
-                
+
                 {import.meta.env.DEV && (
                   <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 mb-4">
                     <p className="text-sm text-yellow-800 font-medium">
@@ -664,7 +720,7 @@ const Profile: React.FC = () => {
                     </p>
                   </div>
                 )}
-                
+
                 {!showDeleteConfirm ? (
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
@@ -689,12 +745,12 @@ const Profile: React.FC = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={handleDeleteAccount}
-                        disabled={loading || deleteConfirmText !== 'DELETE'}
+                        disabled={isLoading || deleteConfirmText !== 'DELETE'}
                         className={`px-4 py-2 bg-red-500 text-white rounded transition-colors ${
                           deleteConfirmText !== 'DELETE' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-600'
                         }`}
                       >
-                        {loading ? 'Deleting...' : 'Confirm Deletion'}
+                        {isLoading ? 'Deleting...' : 'Confirm Deletion'}
                       </button>
                       <button
                         onClick={() => {
@@ -712,13 +768,13 @@ const Profile: React.FC = () => {
             </div>
           )}
         </div>
-        
+
         <button
           onClick={handleUpdateProfile}
-          disabled={loading}
+          disabled={isLoading}
           className="w-full p-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 text-lg font-medium"
         >
-          {loading ? 'Saving...' : 'Update Profile'}
+          {isLoading ? 'Saving...' : 'Update Profile'}
         </button>
       </div>
     </div>

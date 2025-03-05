@@ -3,23 +3,19 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type ColorScheme = 'blue' | 'green' | 'purple' | 'orange' | 'default';
 
 export interface ThemePreferences {
   mode: ThemeMode;
-  colorScheme: ColorScheme;
 }
 
 interface ThemeContextType {
   theme: ThemePreferences;
   currentMode: 'light' | 'dark'; // Actual active mode
-  colorScheme: ColorScheme;
   setTheme: (preferences: Partial<ThemePreferences>) => Promise<void>;
 }
 
 const defaultTheme: ThemePreferences = {
   mode: 'system',
-  colorScheme: 'default',
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -57,68 +53,82 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     loadThemePreferences();
   }, [user]);
 
-  // Calculate actual mode based on system preference and user preference
+  // Detect system theme preference
   useEffect(() => {
-    const determineMode = () => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = () => {
       if (theme.mode === 'system') {
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setCurrentMode(systemPrefersDark ? 'dark' : 'light');
-      } else {
-        setCurrentMode(theme.mode);
+        setCurrentMode(mediaQuery.matches ? 'dark' : 'light');
       }
     };
-
-    determineMode();
-
-    // Listen for system preference changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => determineMode();
+    
+    // Initial check
+    handleChange();
+    
+    // Listen for changes
     mediaQuery.addEventListener('change', handleChange);
-
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
   }, [theme.mode]);
 
-  // Apply theme to document
+  // Apply theme mode
   useEffect(() => {
-    // Apply dark/light mode
+    if (theme.mode === 'system') {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setCurrentMode(systemPrefersDark ? 'dark' : 'light');
+    } else {
+      setCurrentMode(theme.mode as 'light' | 'dark');
+    }
+  }, [theme.mode]);
+
+  // Apply dark mode class to document
+  useEffect(() => {
     if (currentMode === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+  }, [currentMode]);
 
-    // Apply color scheme
-    document.documentElement.setAttribute('data-color-scheme', theme.colorScheme);
-  }, [currentMode, theme.colorScheme]);
-
-  // Save theme to database
+  // Save theme preferences to database
   const setTheme = async (preferences: Partial<ThemePreferences>) => {
-    if (!user) return;
-
-    const newTheme = { ...theme, ...preferences };
-    setThemeState(newTheme);
+    if (!user) {
+      // If not logged in, just update local state
+      setThemeState(prev => ({ ...prev, ...preferences }));
+      return;
+    }
 
     try {
-      await supabase
+      const newPreferences = { ...theme, ...preferences };
+      setThemeState(newPreferences);
+
+      const { error } = await supabase
         .from('user_profiles')
-        .update({ theme_preferences: newTheme })
+        .update({ theme_preferences: newPreferences })
         .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error saving theme preferences:', error);
+      }
     } catch (error) {
       console.error('Error saving theme preferences:', error);
     }
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, currentMode, colorScheme: theme.colorScheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, currentMode, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 }
 
-export function useTheme() {
+export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-}
+};

@@ -25,6 +25,7 @@ import FearProgressChart from '@/components/dashboard/FearProgressChart';
 import ActivityLog from '@/components/dashboard/ActivityLog';
 import JournalEntries from '@/components/dashboard/JournalEntries';
 import RecommendedActivities from '@/components/dashboard/RecommendedActivities';
+import UserJourney from '@/components/dashboard/UserJourney';
 
 // Mock data
 import { mockUserData } from '@/data/mockData';
@@ -37,6 +38,7 @@ const defaultDashboardLayout = {
     journal: { visible: true, position: 3, size: 'medium' as 'small' | 'medium' | 'large' },
     recommended: { visible: true, position: 4, size: 'medium' as 'small' | 'medium' | 'large' },
     personalized: { visible: true, position: 5, size: 'large' as 'small' | 'medium' | 'large' },
+    journey: { visible: true, position: 6, size: 'medium' as 'small' | 'medium' | 'large' },
   },
 };
 
@@ -85,10 +87,21 @@ const CustomDashboard = () => {
         
         // Here we would fetch real user data in a production app
         // For now, we'll just use the mock data with a timeout to simulate loading
-        setTimeout(() => {
-          setIsLoading(false);
-          console.log("Dashboard data loaded");
-        }, 800);
+        const loadingPromise = new Promise<void>((resolve) => {
+          setTimeout(() => {
+            setIsLoading(false);
+            console.log("Dashboard data loaded");
+            resolve();
+          }, 800);
+        });
+        
+        // Add a timeout to prevent infinite loading
+        const timeoutPromise = new Promise<void>((_, reject) => {
+          setTimeout(() => reject(new Error('Dashboard data loading timed out')), 10000);
+        });
+        
+        // Race the promises
+        await Promise.race([loadingPromise, timeoutPromise]);
 
         // Apply personalization to the mock data based on user preferences
         if (preferences?.experiencePreferences?.focus?.length > 0) {
@@ -134,15 +147,32 @@ const CustomDashboard = () => {
         }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
+        setIsLoading(false); // Ensure loading state is cleared on error
         toast({
           title: "Error loading dashboard",
-          description: "There was a problem loading your data. Please try again.",
+          description: "There was a problem loading your data. Please try refreshing the page.",
           variant: "destructive",
         });
       }
     };
     
+    // Set a backup timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Dashboard loading timed out after 15 seconds');
+        setIsLoading(false);
+        toast({
+          title: "Loading timeout",
+          description: "Dashboard is taking longer than expected to load. Some data may be incomplete.",
+          variant: "warning",
+        });
+      }
+    }, 15000);
+    
     loadDashboardData();
+    
+    // Clean up the timeout
+    return () => clearTimeout(timeoutId);
   }, [toast, preferences?.experiencePreferences]);
 
   // Fallback if profile data or preferences haven't loaded yet
@@ -284,6 +314,12 @@ const CustomDashboard = () => {
           return (
             <div className={`${sizeClasses[size]} ${height}`}>
               <PersonalizedRecommendations />
+            </div>
+          );
+        case 'journey':
+          return (
+            <div className={`${sizeClasses[size]} ${height} overflow-auto`}>
+              <UserJourney />
             </div>
           );
         default:

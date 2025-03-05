@@ -130,9 +130,52 @@ export const locations: Record<string, Location> = {
       longitude: -122.3321
     }
   },
-  "virtual": {
-    id: "virtual",
-    name: "Virtual / Online",
-    country: "Global",
-  }
+  "hawaii": {
+    id: "hawaii",
+    name: "Kona",
+    state: "Hawaii",
+    country: "USA",
+    coordinates: {
+      latitude: 19.6400,
+      longitude: -155.9969
+    }
+  },
+  "south_africa": {
+    id: "south_africa",
+    name: "Gansbaai",
+    country: "South Africa",
+    coordinates: {
+      latitude: -34.5805,
+      longitude: 19.3518
+    }
+  },
+  "tonga": {
+    id: "tonga",
+    name: "Vava'u",
+    country: "Tonga",
+    coordinates: {
+      latitude: -18.6216,
+      longitude: -173.9777
+    }
+  },
+  "great_barrier_reef": {
+    id: "great_barrier_reef",
+    name: "Great Barrier Reef",
+    state: "Queensland",
+    country: "Australia",
+    coordinates: {
+      latitude: -18.2871,
+      longitude: 147.6992
+    }
+  },
+  "san_diego": {
+    id: "san_diego",
+    name: "San Diego",
+    state: "California",
+    country: "USA",
+    coordinates: {
+      latitude: 32.7157,
+      longitude: -117.1611
+    }
+  },
 };

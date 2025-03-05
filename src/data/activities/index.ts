@@ -3,7 +3,6 @@ import { heightsActivities } from './heightsActivities';
 import { waterActivities } from './waterActivities';
 import { socialActivities } from './socialActivities';
 import { confinedActivities } from './confinedActivities';
-import { riskActivities } from './riskActivities';
 import { locations } from './locations';
 
 // Export all activities in a single array for easy access
@@ -11,8 +10,7 @@ export const allActivities: Activity[] = [
   ...heightsActivities,
   ...waterActivities,
   ...socialActivities,
-  ...confinedActivities,
-  ...riskActivities
+  ...confinedActivities
 ];
 
 // Export individual category arrays for direct access
@@ -21,23 +19,24 @@ export {
   waterActivities,
   socialActivities,
   confinedActivities,
-  riskActivities,
   locations
 };
 
 // Activity difficulty level display helpers
 export const difficultyLabels = {
   beginner: "Beginner",
-  intermediate: "Intermediate",
-  advanced: "Advanced",
-  extreme: "Extreme"
+  easy: "Easy",
+  moderate: "Moderate",
+  challenging: "Challenging",
+  difficult: "Difficult"
 };
 
 export const difficultyColors = {
   beginner: "bg-green-100 text-green-800",
-  intermediate: "bg-blue-100 text-blue-800",
-  advanced: "bg-orange-100 text-orange-800",
-  extreme: "bg-red-100 text-red-800"
+  easy: "bg-blue-100 text-blue-800",
+  moderate: "bg-yellow-100 text-yellow-800",
+  challenging: "bg-orange-100 text-orange-800",
+  difficult: "bg-red-100 text-red-800"
 };
 
 // Cost level display helpers
@@ -66,7 +65,7 @@ export const filterActivitiesByFearCategory = (activities: Activity[], fearCateg
 };
 
 export const filterActivitiesByMaxDifficulty = (activities: Activity[], maxDifficulty: string): Activity[] => {
-  const difficultyLevels = ['beginner', 'intermediate', 'advanced', 'extreme'];
+  const difficultyLevels = ['beginner', 'easy', 'moderate', 'challenging', 'difficult'];
   const maxIndex = difficultyLevels.indexOf(maxDifficulty);
   
   return activities.filter(activity => {
@@ -145,12 +144,12 @@ export const sortActivities = (activities: Activity[], sortOrder: string): Activ
       return sorted.sort((a, b) => a.title.localeCompare(b.title));
     case 'difficulty_asc':
       return sorted.sort((a, b) => {
-        const difficultyLevels = ['beginner', 'intermediate', 'advanced', 'extreme'];
+        const difficultyLevels = ['beginner', 'easy', 'moderate', 'challenging', 'difficult'];
         return difficultyLevels.indexOf(a.difficulty) - difficultyLevels.indexOf(b.difficulty);
       });
     case 'difficulty_desc':
       return sorted.sort((a, b) => {
-        const difficultyLevels = ['beginner', 'intermediate', 'advanced', 'extreme'];
+        const difficultyLevels = ['beginner', 'easy', 'moderate', 'challenging', 'difficult'];
         return difficultyLevels.indexOf(b.difficulty) - difficultyLevels.indexOf(a.difficulty);
       });
     case 'recommended':

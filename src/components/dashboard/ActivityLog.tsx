@@ -80,12 +80,10 @@ const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
       case 'social':
       case 'social-anxiety':
         return 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200';
-      case 'water':
+      case 'ocean':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
       case 'confined':
         return 'bg-amber-100 text-amber-800 hover:bg-amber-200';
-      case 'risk':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
       case 'public-speaking':
         return 'bg-green-100 text-green-800 hover:bg-green-200';
       case 'rejection':

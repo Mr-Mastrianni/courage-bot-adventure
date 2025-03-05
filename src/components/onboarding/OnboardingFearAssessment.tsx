@@ -19,12 +19,12 @@ const quizQuestions = [
   {
     id: 2,
     category: 'water', 
-    question: "What's your reaction to deep water?",
+    question: "What's your reaction to being in water or large bodies of water?",
     options: [
-      { text: "I love swimming in deep water", score: 1, fear: "water" },
-      { text: "I'm okay as long as I can touch the bottom", score: 2, fear: "water" },
-      { text: "I prefer to stay in shallow areas", score: 3, fear: "water" },
-      { text: "I avoid water beyond my waist", score: 4, fear: "water" }
+      { text: "I love swimming in water", score: 1, fear: "water" },
+      { text: "I'm okay near the shore", score: 2, fear: "water" },
+      { text: "I prefer to stay on the beach", score: 3, fear: "water" },
+      { text: "I avoid large bodies of water entirely", score: 4, fear: "water" }
     ]
   },
   {
@@ -51,24 +51,13 @@ const quizQuestions = [
   },
   {
     id: 5,
-    category: 'risk', 
-    question: "How do you feel about trying an extreme sport (like skydiving)?",
+    category: 'extreme_sports', 
+    question: "How do you feel about extreme sports like bungee jumping?",
     options: [
-      { text: "Excited to try it!", score: 1, fear: "risk" },
-      { text: "Nervous but would try with encouragement", score: 2, fear: "risk" },
-      { text: "Very reluctant", score: 3, fear: "risk" },
-      { text: "Absolutely not", score: 4, fear: "risk" }
-    ]
-  },
-  {
-    id: 6,
-    category: 'extreme_sports',
-    question: "What extreme sports scare you?",
-    options: [
-      { text: "None - I'd try any extreme sport", score: 1, fear: "extreme_sports" },
-      { text: "Only the most dangerous ones (e.g., base jumping)", score: 2, fear: "extreme_sports" },
-      { text: "Most of them make me nervous", score: 3, fear: "extreme_sports" },
-      { text: "All extreme sports terrify me", score: 4, fear: "extreme_sports" }
+      { text: "Excited to try it!", score: 1, fear: "extreme_sports" },
+      { text: "Nervous but would try with encouragement", score: 2, fear: "extreme_sports" },
+      { text: "Very reluctant", score: 3, fear: "extreme_sports" },
+      { text: "Absolutely not", score: 4, fear: "extreme_sports" }
     ]
   }
 ];
@@ -166,15 +155,13 @@ const OnboardingFearAssessment: React.FC<OnboardingFearAssessmentProps> = ({ onC
       case "heights":
         return "Fear of heights (acrophobia)";
       case "water":
-        return "Fear of water or drowning";
+        return "Fear of water (aquaphobia)";
       case "social":
         return "Social anxiety or fear of judgment";
       case "confined":
         return "Fear of enclosed spaces (claustrophobia)";
-      case "risk":
-        return "Fear of taking risks";
       case "extreme_sports":
-        return "Fear of extreme sports";
+        return "Fear of extreme sports or activities";
       default:
         return fear;
     }
@@ -190,9 +177,7 @@ const OnboardingFearAssessment: React.FC<OnboardingFearAssessmentProps> = ({ onC
       case "social":
         return "Join small group activities or workshops to practice social interaction in a supportive environment.";
       case "confined":
-        return "Practice mindfulness and breathing techniques in progressively smaller spaces with support.";
-      case "risk":
-        return "Start with small calculated risks and progressively challenge yourself with support from our guides.";
+        return "Practice relaxation techniques in progressively smaller spaces with easy exit options.";
       case "extreme_sports":
         return "Start with low-risk extreme sports and gradually progress to more challenging activities.";
       default:

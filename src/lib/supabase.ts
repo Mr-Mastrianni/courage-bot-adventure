@@ -20,8 +20,26 @@ const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ
 export const supabase = createClient(url, key, {
   auth: {
     persistSession: true,
-    storageKey: 'supabase.auth.token',
-    storage: window.localStorage
+    storageKey: 'courage-bot-adventure.auth.token',
+    storage: window.localStorage,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'implicit'
+  }
+});
+
+// Add a listener for auth errors
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Supabase auth event:', event);
+  
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('Auth token refreshed successfully');
+  }
+  
+  if (event === 'SIGNED_OUT') {
+    console.log('User signed out');
+    // Clear any cached data
+    localStorage.removeItem('courage-bot-adventure.user.profile');
   }
 });
 

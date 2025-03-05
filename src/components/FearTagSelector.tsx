@@ -15,10 +15,9 @@ const commonFears = [
   'Rejection',
   'Social Situations',
   'Flying',
-  'Spiders',
   'Confined Spaces',
   'Darkness',
-  'Water',
+  'Ocean',
   'Making Decisions',
   'Change',
   'Being Alone',
@@ -27,7 +26,7 @@ const commonFears = [
   
   // Adventure-related fears
   'Extreme Heights',
-  'Deep Water',
+  'Deep Ocean',
   'Wilderness Survival',
   'Rock Climbing',
   'Skydiving',
@@ -35,7 +34,6 @@ const commonFears = [
   'White Water Rafting',
   'Solo Travel',
   'Camping Alone',
-  'Wildlife Encounters',
   'Cliff Jumping',
   'Zip Lining',
   'Mountain Biking',
@@ -94,7 +92,7 @@ const FearTagSelector: React.FC<FearTagSelectorProps> = ({ selectedFears, onChan
 
   // Separate fears into categories for display
   const adventureFears = commonFears.filter(fear => [
-    'Extreme Heights', 'Deep Water', 'Wilderness Survival', 'Rock Climbing', 
+    'Extreme Heights', 'Deep Ocean', 'Wilderness Survival', 'Rock Climbing', 
     'Skydiving', 'Scuba Diving', 'White Water Rafting', 'Solo Travel',
     'Cliff Jumping', 'Bungee Jumping', 'Paragliding'
   ].includes(fear));

@@ -11,12 +11,14 @@ interface ActivityCardProps {
   activity: Activity;
   className?: string;
   viewMode?: 'grid' | 'list';
+  onViewDetails?: (activity: Activity) => void;
 }
 
 const ActivityCard: React.FC<ActivityCardProps> = ({ 
   activity, 
   className = '',
-  viewMode = 'grid'
+  viewMode = 'grid',
+  onViewDetails
 }) => {
   const isListView = viewMode === 'list';
   const difficultyColor = getColorForDifficulty(activity.difficultyLevel);
@@ -118,7 +120,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
         </CardContent>
         
         <CardFooter className={`${isListView ? 'p-3 pt-0' : 'p-4 pt-0'} mt-auto flex justify-between border-t pt-3`}>
-          <Button variant="secondary" size="sm" className="w-full">View Details</Button>
+          <Button variant="secondary" size="sm" className="w-full" onClick={() => onViewDetails?.(activity)}>View Details</Button>
         </CardFooter>
       </div>
     </Card>

@@ -377,22 +377,93 @@
     }
   }
 
-  /* Chatbot styles */
+  /* Chatbot specific styles */
   .chatbot-container {
+    z-index: 1000;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .chatbot-open {
-    transform: translateY(0);
     opacity: 1;
-    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
   }
 
   .chatbot-closed {
-    transform: translateY(20px);
     opacity: 0;
-    visibility: hidden;
+    transform: translateY(20px);
     pointer-events: none;
+  }
+
+  .chatbot-card {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .chatbot-messages {
+    background-color: #f9fafb;
+  }
+
+  /* Force text visibility in chatbot */
+  .chatbot-messages p,
+  .chatbot-messages span,
+  .chatbot-messages div,
+  .chatbot-messages strong,
+  .chatbot-messages em,
+  .chatbot-messages li,
+  .chatbot-messages ul,
+  .chatbot-messages ol,
+  .chatbot-messages h1,
+  .chatbot-messages h2,
+  .chatbot-messages h3 {
+    color: black !important;
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+  }
+
+  /* Message styling */
+  .assistant-message {
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    color: black;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 85%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .assistant-message p,
+  .assistant-message span,
+  .assistant-message div,
+  .assistant-message strong,
+  .assistant-message em,
+  .assistant-message li,
+  .assistant-message ul,
+  .assistant-message ol {
+    color: black !important;
+  }
+
+  .user-message {
+    background-color: #f97316; /* courage orange */
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 85%;
+    align-self: flex-end;
+  }
+
+  .user-message p,
+  .user-message span,
+  .user-message div {
+    color: white !important;
+  }
+
+  /* Ensure input text is visible */
+  textarea {
+    color: black !important;
+    background-color: white !important;
   }
 
   /* Markdown styles for chatbot */
@@ -650,5 +721,23 @@
     .navbar-logo {
       max-width: 160px;
     }
+  }
+
+  /* Ensure dropdown menus appear above all other content */
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+    position: relative;
+  }
+
+  /* Fix for dropdown menu positioning */
+  .radix-dropdown-content {
+    position: relative;
+    z-index: 9999 !important;
+  }
+
+  /* Ensure portals are above other content */
+  [data-radix-portal] {
+    position: relative;
+    z-index: 9999 !important;
   }
 }

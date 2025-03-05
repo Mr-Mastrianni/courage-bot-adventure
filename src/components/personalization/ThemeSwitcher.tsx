@@ -1,6 +1,6 @@
 import React from 'react';
 import { Moon, Sun, Monitor, CheckCircle } from 'lucide-react';
-import { useTheme, ThemeMode, ColorScheme } from '@/contexts/ThemeContext';
+import { useTheme, ThemeMode } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,18 +20,6 @@ const ThemeSwitcher = () => {
     setTheme({ mode: mode as ThemeMode });
   };
 
-  const handleColorSchemeChange = (colorScheme: ColorScheme) => {
-    setTheme({ colorScheme: colorScheme as ColorScheme });
-  };
-
-  const colorSchemes: { value: ColorScheme; label: string; color: string }[] = [
-    { value: 'default', label: 'Default', color: 'bg-blue-500' },
-    { value: 'blue', label: 'Ocean Blue', color: 'bg-blue-600' },
-    { value: 'green', label: 'Forest Green', color: 'bg-green-600' },
-    { value: 'purple', label: 'Lavender', color: 'bg-purple-600' },
-    { value: 'orange', label: 'Sunset Orange', color: 'bg-orange-500' },
-  ];
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -50,7 +38,7 @@ const ThemeSwitcher = () => {
         </Button>
       </DropdownMenuTrigger>
       
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="z-[9999] mt-1">
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         
         <DropdownMenuSeparator />
@@ -74,31 +62,6 @@ const ThemeSwitcher = () => {
             {theme.mode === 'system' && <CheckCircle className="ml-auto h-4 w-4" />}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
-        
-        <DropdownMenuSeparator />
-        
-        <DropdownMenuLabel>Color Scheme</DropdownMenuLabel>
-        
-        <DropdownMenuSeparator />
-        
-        <div className="p-2">
-          <div className="flex flex-wrap gap-1">
-            {colorSchemes.map((scheme) => (
-              <button
-                key={scheme.value}
-                onClick={() => handleColorSchemeChange(scheme.value)}
-                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all 
-                  ${scheme.color} hover:scale-110 
-                  ${theme.colorScheme === scheme.value ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-black ring-black dark:ring-white' : ''}`}
-                title={scheme.label}
-              >
-                {theme.colorScheme === scheme.value && (
-                  <CheckCircle className="h-3 w-3 text-white" />
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

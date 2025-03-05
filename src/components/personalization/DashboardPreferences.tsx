@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { LayoutDashboard, Eye, EyeOff, Grid, List, Check } from 'lucide-react';
+import { LayoutDashboard, Eye, EyeOff, Grid, List, Check, HeartHandshake } from 'lucide-react';
 
-type WidgetType = 'activity' | 'progress' | 'journal' | 'recommended' | 'personalized';
+type WidgetType = 'activity' | 'progress' | 'journal' | 'recommended' | 'personalized' | 'journey';
 
 const DashboardPreferences = () => {
   const { dashboardLayout, updateDashboardLayout, resetPreferences } = useUserPreferences();
@@ -91,6 +91,8 @@ const DashboardPreferences = () => {
         return 'Recommended Activities';
       case 'personalized':
         return 'Personalized Recommendations';
+      case 'journey':
+        return 'My Journey';
       default:
         return id;
     }

@@ -1,10 +1,11 @@
 import React from 'react';
+import { X } from 'lucide-react';
 
 interface ProfileCompletionIndicatorProps {
   profile: {
     full_name?: string | null;
     avatar_url?: string | null;
-    age_range?: string | null;
+    date_of_birth?: string | null;
     key_fears?: string[] | null;
     experience_level?: string | null;
     challenge_intensity?: string | null;
@@ -12,14 +13,15 @@ interface ProfileCompletionIndicatorProps {
     bio?: string | null;
     location?: string | null;
   };
+  onClose?: () => void;
 }
 
-const ProfileCompletionIndicator: React.FC<ProfileCompletionIndicatorProps> = ({ profile }) => {
+const ProfileCompletionIndicator: React.FC<ProfileCompletionIndicatorProps> = ({ profile, onClose }) => {
   // Define required fields and their weights
   const profileFields = [
     { name: 'full_name', weight: 15, label: 'Full Name' },
     { name: 'avatar_url', weight: 10, label: 'Profile Picture' },
-    { name: 'age_range', weight: 10, label: 'Age Range' },
+    { name: 'date_of_birth', weight: 10, label: 'Date of Birth' },
     { name: 'key_fears', weight: 15, label: 'Key Fears' },
     { name: 'experience_level', weight: 10, label: 'Experience Level' },
     { name: 'challenge_intensity', weight: 10, label: 'Challenge Intensity' },
@@ -65,7 +67,17 @@ const ProfileCompletionIndicator: React.FC<ProfileCompletionIndicatorProps> = ({
   });
   
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6">
+    <div className="bg-white rounded-lg shadow p-4 mb-6 relative">
+      {onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+          aria-label="Close"
+        >
+          <X size={18} />
+        </button>
+      )}
+      
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-semibold text-gray-800">Profile Completion</h2>
         <span className="text-lg font-bold text-blue-600">{completionPercentage}%</span>

@@ -42,50 +42,72 @@ const Dashboard = () => {
       
       try {
         setLoading(true);
+        setError(null);
         console.log('Loading dashboard data for user:', user.id);
+        
+        // Set a timeout to prevent getting stuck indefinitely
+        const timeoutId = setTimeout(() => {
+          console.error('Dashboard data loading timed out');
+          setError('Loading timed out. Please refresh the page.');
+          setLoading(false);
+        }, 10000);
         
         // Get user profile data
         const { data: profileData, error: profileError } = await getUserProfile();
         
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-          setError('Failed to load profile data');
+          setError(`Failed to load profile data: ${profileError}`);
           setLoading(false);
+          clearTimeout(timeoutId);
           return;
         }
         
-        console.log('Fetched profile data:', profileData);
+        if (!profileData) {
+          console.error('No profile data returned');
+          setError('No profile data found. Please try again.');
+          setLoading(false);
+          clearTimeout(timeoutId);
+          return;
+        }
         
-        // Set up user data with real profile data
-        const dashboardData = {
-          ...profileData,
-          name: profileData?.full_name || user.email?.split('@')[0] || 'User',
-          email: user.email,
-          memberSince: new Date(user.created_at).toISOString().split('T')[0],
-        };
+        console.log('Profile data loaded:', profileData);
+        setUserData(profileData);
         
-        setUserData(dashboardData);
+        // Clear the timeout since we've successfully loaded the data
+        clearTimeout(timeoutId);
         
-        // Fetch fear assessments (in a real app, this would come from your database)
-        // For now, we'll just use an empty array
-        setFearAssessments([]);
+        // Load other dashboard data here...
+        // For now, we'll just use placeholder data
         
-        // Fetch completed activities
-        // For now, we'll just use an empty array
-        setCompletedActivities([]);
+        setFearAssessments([
+          { id: 1, name: 'Public Speaking', level: 7, progress: 30 },
+          { id: 2, name: 'Heights', level: 8, progress: 15 },
+          { id: 3, name: 'Social Situations', level: 6, progress: 45 },
+        ]);
         
-        // Fetch recommendations
-        // For now, we'll just use an empty array
-        setRecommendations([]);
+        setCompletedActivities([
+          { id: 1, name: 'Spoke to a small group', date: '2023-05-15', type: 'challenge' },
+          { id: 2, name: 'Took elevator to 20th floor', date: '2023-05-10', type: 'challenge' },
+          { id: 3, name: 'Attended networking event', date: '2023-05-05', type: 'challenge' },
+        ]);
         
-        // Fetch journal entries
-        // For now, we'll just use an empty array
-        setJournalEntries([]);
+        setRecommendations([
+          { id: 1, name: 'Join a Toastmasters meeting', difficulty: 'medium', category: 'Public Speaking' },
+          { id: 2, name: 'Visit an observation deck', difficulty: 'hard', category: 'Heights' },
+          { id: 3, name: 'Strike up conversation with a stranger', difficulty: 'medium', category: 'Social Situations' },
+        ]);
         
+        setJournalEntries([
+          { id: 1, title: 'My first public speech', date: '2023-05-15', content: 'Today I gave my first speech...' },
+          { id: 2, title: 'Conquering the elevator', date: '2023-05-10', content: 'I finally made it to the 20th floor...' },
+          { id: 3, title: 'Networking success', date: '2023-05-05', content: 'The event was actually fun...' },
+        ]);
+        
+        setLoading(false);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        setError('Failed to load dashboard data');
-      } finally {
+        setError('An unexpected error occurred. Please try again.');
         setLoading(false);
       }
     };
@@ -133,6 +155,21 @@ const Dashboard = () => {
               <Skeleton className="h-64 w-full" />
               <Skeleton className="h-64 w-full" />
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Error</h1>
+            <p className="text-lg text-gray-500">{error}</p>
+            <Button variant="outline" onClick={() => window.location.reload()}>Try Again</Button>
           </div>
         </div>
       </div>

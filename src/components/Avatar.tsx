@@ -12,10 +12,68 @@ const Avatar: React.FC<AvatarProps> = ({ url, size, onUpload }) => {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (url) setAvatarUrl(url);
+    console.log('Avatar component received url prop:', url);
+    if (url) {
+      console.log('Setting avatarUrl state to:', url);
+      setAvatarUrl(url);
+      
+      // Reset retry count when URL changes
+      setRetryCount(0);
+    } else {
+      console.log('Avatar url prop is null or empty');
+    }
   }, [url]);
+
+  // Attempt to fetch user profile avatar if URL is missing
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (!avatarUrl && retryCount < 3) {
+        console.log(`Attempting to fetch user avatar (retry ${retryCount + 1}/3)`);
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Try to get avatar from user metadata
+            if (user.user_metadata?.avatar_url) {
+              console.log('Found avatar URL in user metadata:', user.user_metadata.avatar_url);
+              setAvatarUrl(user.user_metadata.avatar_url);
+              return;
+            }
+            
+            // If not in metadata, try to get from profile
+            const { data, error } = await supabase
+              .from('user_profiles')
+              .select('avatar_url')
+              .eq('user_id', user.id)
+              .single();
+              
+            if (error) {
+              console.error('Error fetching user profile for avatar:', error);
+            } else if (data?.avatar_url) {
+              console.log('Found avatar URL in user profile:', data.avatar_url);
+              setAvatarUrl(data.avatar_url);
+              
+              // Also update user metadata for consistency
+              await supabase.auth.updateUser({
+                data: { avatar_url: data.avatar_url }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error in fetchUserAvatar:', error);
+        } finally {
+          setRetryCount(prev => prev + 1);
+        }
+      }
+    };
+    
+    if (!avatarUrl) {
+      fetchUserAvatar();
+    }
+  }, [avatarUrl, retryCount]);
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -84,8 +142,26 @@ const Avatar: React.FC<AvatarProps> = ({ url, size, onUpload }) => {
       
       console.log('Avatar public URL:', publicUrl);
       
+      // Update local state
+      setAvatarUrl(publicUrl);
+      
       // Pass URL to parent component
       onUpload(publicUrl);
+      
+      // Also update user metadata directly for redundancy
+      try {
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { avatar_url: publicUrl }
+        });
+        
+        if (updateError) {
+          console.error('Error updating user metadata with avatar URL:', updateError);
+        } else {
+          console.log('User metadata updated with new avatar URL');
+        }
+      } catch (error) {
+        console.error('Unexpected error updating user metadata:', error);
+      }
       
       // Show success message
       toast({
@@ -113,6 +189,22 @@ const Avatar: React.FC<AvatarProps> = ({ url, size, onUpload }) => {
             src={avatarUrl}
             alt="Avatar"
             className="object-cover w-full h-full"
+            onError={(e) => {
+              console.error('Avatar image failed to load:', avatarUrl);
+              e.currentTarget.onerror = null; // Prevent infinite error loop
+              e.currentTarget.src = ''; // Clear the src
+              
+              // Try to recover by resetting URL and triggering retry mechanism
+              setAvatarUrl(null);
+              setRetryCount(0); // Reset retry count to trigger a new fetch attempt
+              
+              // Show error message
+              toast({
+                title: "Avatar Error",
+                description: "Failed to load avatar image. Attempting to recover...",
+                variant: "destructive"
+              });
+            }}
           />
         ) : (
           <div 

@@ -20,10 +20,19 @@ import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import ActivityExplorer from "./pages/ActivityExplorer";
 import AuthCallback from "./pages/AuthCallback";
+import { useEffect } from "react";
+import { applyMigrations } from "./lib/migrations";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Apply database migrations when the app starts
+  // This is a simple way to ensure the database schema is up to date
+  // without requiring manual migrations
+  useEffect(() => {
+    applyMigrations().catch(console.error);
+  }, []);
+
   return (
     <ErrorBoundary fallback={
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-6">

@@ -26,13 +26,8 @@ import {
 const fearCategoryOptions: { value: FearCategory; label: string }[] = [
   { value: 'heights', label: 'Heights' },
   { value: 'water', label: 'Water' },
-  { value: 'ocean', label: 'Ocean' },
   { value: 'confined', label: 'Confined Spaces' },
   { value: 'social', label: 'Social Situations' },
-  { value: 'speed', label: 'Speed' },
-  { value: 'falling', label: 'Falling' },
-  { value: 'animals', label: 'Animals' },
-  { value: 'risk', label: 'Risk Taking' },
 ];
 
 const difficultyOptions: { value: DifficultyLevel; label: string }[] = [

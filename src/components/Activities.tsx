@@ -6,7 +6,7 @@ import '../styles/micro-interactions.css';
 import { ActivityIcon, FearIcon, ExploreIcon } from './CustomIcons';
 
 // Define fear categories
-type FearCategory = 'heights' | 'water' | 'ocean' | 'falling' | 'speed' | 'animals';
+type FearCategory = 'heights' | 'water';
 
 const getCategoryIcon = (category: FearCategory) => {
   switch (category) {
@@ -18,38 +18,14 @@ const getCategoryIcon = (category: FearCategory) => {
       );
     case 'water':
       return (
-        <div className="flex items-center justify-center w-4 h-4 bg-blue-900 rounded-full">
-          <Waves size={12} className="text-blue-300" />
-        </div>
-      );
-    case 'ocean':
-      return (
         <div className="flex items-center justify-center w-4 h-4 bg-cyan-900 rounded-full">
           <Waves size={12} className="text-cyan-300" />
-        </div>
-      );
-    case 'falling':
-      return (
-        <div className="flex items-center justify-center w-4 h-4 bg-slate-800 rounded-full">
-          <Cloud size={12} className="text-slate-300" />
-        </div>
-      );
-    case 'speed':
-      return (
-        <div className="flex items-center justify-center w-4 h-4 bg-amber-900 rounded-full">
-          <Wind size={12} className="text-amber-300" />
-        </div>
-      );
-    case 'animals':
-      return (
-        <div className="flex items-center justify-center w-4 h-4 bg-emerald-900 rounded-full">
-          <Compass size={12} className="text-emerald-300" />
         </div>
       );
     default:
       return (
         <div className="flex items-center justify-center w-4 h-4 bg-growth-800 rounded-full">
-          <Map size={12} className="text-growth-300" />
+          <Mountain size={12} className="text-growth-300" />
         </div>
       );
   }
@@ -60,15 +36,7 @@ const getCategoryColor = (category: FearCategory) => {
     case 'heights':
       return 'from-growth-800 to-growth-950';
     case 'water':
-      return 'from-blue-800 to-blue-950';
-    case 'ocean':
       return 'from-cyan-800 to-cyan-950';
-    case 'falling':
-      return 'from-indigo-800 to-indigo-950';
-    case 'speed':
-      return 'from-amber-800 to-amber-950';
-    case 'animals':
-      return 'from-emerald-800 to-emerald-950';
     default:
       return 'from-growth-800 to-growth-950';
   }
@@ -105,7 +73,7 @@ const activities = [
     description: "Come face-to-face with these majestic ocean predators in their natural habitat.",
     image: "https://images.pexels.com/photos/10498904/pexels-photo-10498904.jpeg?auto=compress&cs=tinysrgb&w=800",
     safety: "Protected by professional shark divers. Interactions designed to respect the sharks' space and behavior.",
-    category: 'ocean'
+    category: 'water'
   },
   {
     id: "basejumping",
@@ -129,7 +97,7 @@ const activities = [
     description: "Stand on the wings of a flying biplane for an unforgettable experience.",
     image: "https://images.pexels.com/photos/30871452/pexels-photo-30871452/free-photo-of-airplane-wing-view-at-sunset.jpeg?auto=compress&cs=tinysrgb&w=800",
     safety: "Secured to the aircraft with professional harness systems. Planes maintained to strict aviation standards.",
-    category: 'speed'
+    category: 'heights'
   },
   {
     id: "bungeejumping",
@@ -161,7 +129,7 @@ const activities = [
     description: "Get close to these gentle giants in their natural oceanic habitat.",
     image: "https://images.pexels.com/photos/27026630/pexels-photo-27026630/free-photo-of-close-encounter-diving-with-a-whale-shark-in-the-deep-blue.jpeg?auto=compress&cs=tinysrgb&w=800",
     safety: "Small guided groups with marine biologists. Protocols to minimize impact on whales and ensure participant safety.",
-    category: 'ocean'
+    category: 'water'
   },
   {
     id: "deepdiving",

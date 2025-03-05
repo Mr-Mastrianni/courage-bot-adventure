@@ -10,6 +10,7 @@ export interface DashboardLayout {
     journal: { visible: boolean; position: number; size: 'small' | 'medium' | 'large' };
     recommended: { visible: boolean; position: number; size: 'small' | 'medium' | 'large' };
     personalized: { visible: boolean; position: number; size: 'small' | 'medium' | 'large' };
+    journey?: { visible: boolean; position: number; size: 'small' | 'medium' | 'large' };
   };
 }
 
@@ -53,6 +54,7 @@ const defaultDashboardLayout: DashboardLayout = {
     journal: { visible: true, position: 2, size: 'medium' },
     recommended: { visible: true, position: 3, size: 'medium' },
     personalized: { visible: true, position: 4, size: 'large' },
+    journey: { visible: true, position: 5, size: 'medium' },
   },
 };
 

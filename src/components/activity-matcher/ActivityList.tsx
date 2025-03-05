@@ -23,6 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 interface ActivityListProps {
   className?: string;
@@ -38,6 +40,9 @@ const ActivityList: React.FC<ActivityListProps> = ({
   const { filteredActivities, activeFilters, matchedActivities } = useActivityMatcher();
   const [selectedActivity, setSelectedActivity] = React.useState<Activity | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const { addActivityToJourney, user } = useAuth();
+  const { toast } = useToast();
+  const [isAddingToJourney, setIsAddingToJourney] = React.useState(false);
   
   // Get the appropriate activities based on list type
   const activitiesToDisplay = React.useMemo(() => {
@@ -90,6 +95,48 @@ const ActivityList: React.FC<ActivityListProps> = ({
     return `${activity.locations[0].name} +${activity.locations.length - 1} more`;
   };
   
+  // Function to handle adding activity to journey
+  const handleAddToJourney = async () => {
+    if (!selectedActivity) return;
+    if (!user) {
+      toast({
+        title: "Not signed in",
+        description: "Please sign in to add activities to your journey",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingToJourney(true);
+    
+    try {
+      const result = await addActivityToJourney(selectedActivity);
+      
+      if (result.success) {
+        toast({
+          title: "Activity added",
+          description: `${selectedActivity.title} has been added to your journey`,
+        });
+        setIsDialogOpen(false);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to add activity to your journey",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding activity to journey:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToJourney(false);
+    }
+  };
+
   // Render empty state if no activities are found
   if (activitiesToDisplay.length === 0) {
     return (
@@ -216,7 +263,7 @@ const ActivityList: React.FC<ActivityListProps> = ({
             
             <div className="relative h-[200px] -mx-6 mt-2">
               <img 
-                src={selectedActivity.image} 
+                src={selectedActivity.imageUrl || selectedActivity.image} 
                 alt={selectedActivity.title} 
                 className="w-full h-full object-cover"
               />
@@ -233,11 +280,11 @@ const ActivityList: React.FC<ActivityListProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium mb-1">Difficulty</h4>
-                  <p className="text-sm">{selectedActivity.difficulty}</p>
+                  <p className="text-sm">{selectedActivity.difficultyLevel}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Cost</h4>
-                  <p className="text-sm">{selectedActivity.cost}</p>
+                  <p className="text-sm">{selectedActivity.costRange}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Time Commitment</h4>
@@ -245,39 +292,46 @@ const ActivityList: React.FC<ActivityListProps> = ({
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-1">Environment</h4>
-                  <p className="text-sm">{selectedActivity.indoor ? 'Indoor' : 'Outdoor'}</p>
+                  <p className="text-sm">{selectedActivity.indoorOutdoor}</p>
                 </div>
               </div>
               
               {/* Location */}
               <div>
                 <h4 className="text-sm font-medium mb-1">Location</h4>
-                <p className="text-sm">{formatLocationDisplay(selectedActivity)}</p>
-              </div>
-              
-              {/* Benefits */}
-              <div>
-                <h4 className="text-sm font-medium mb-1">Benefits</h4>
-                <p className="text-sm">{selectedActivity.benefits}</p>
+                <p className="text-sm">{selectedActivity.location}</p>
               </div>
               
               {/* Safety information */}
-              <div className="bg-muted p-3 rounded-md">
-                <h4 className="text-sm font-medium mb-1 flex items-center">
-                  <AlertCircle size={14} className="mr-1" />
-                  Safety Information
-                </h4>
-                <p className="text-sm">{selectedActivity.safety}</p>
-              </div>
+              {selectedActivity.safety && (
+                <div className="bg-muted p-3 rounded-md">
+                  <h4 className="text-sm font-medium mb-1 flex items-center">
+                    <AlertCircle size={14} className="mr-1" />
+                    Safety Information
+                  </h4>
+                  <p className="text-sm">{selectedActivity.safety}</p>
+                </div>
+              )}
             </div>
             
             <DialogFooter>
               <Button variant="outline" onClick={handleCloseDialog}>
                 Close
               </Button>
-              <Button>
-                <HeartHandshake size={16} className="mr-2" />
-                Add to My Journey
+              <Button 
+                onClick={handleAddToJourney} 
+                disabled={isAddingToJourney || !user}
+              >
+                {isAddingToJourney ? (
+                  <>
+                    <span className="mr-2">Adding...</span>
+                  </>
+                ) : (
+                  <>
+                    <HeartHandshake size={16} className="mr-2" />
+                    Add to My Journey
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

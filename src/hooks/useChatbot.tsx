@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { sendMessageToOpenAI, logConversationToAirtable, saveUserToAirtable } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +15,7 @@ type UserData = {
   email?: string;
   phone?: string;
   birthday?: string;
+  fear?: string;
   adventures?: string[];
 };
 
@@ -29,37 +29,41 @@ type ChatState = {
     reasons?: string;
     rootCause?: string;
   };
-  step: 'initial' | 'name' | 'email' | 'phone' | 'birthday' | 'adventures' | 'confirmation' | 'completed';
+  step: 'initial' | 'name' | 'fear' | 'email' | 'phone' | 'birthday' | 'adventures' | 'confirmation' | 'completed';
 };
 
 export function useChatbot() {
   const { toast } = useToast();
   const [userId] = useState(`user_${Math.random().toString(36).substring(2, 9)}`);
-  const [state, setState] = useState<ChatState>({
-    isOpen: false,
-    messages: [
-      {
-        id: 'welcome',
-        role: 'assistant',
-        content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears, but first I'd like to get to know you better. \n\n**What's your name?**",
-        timestamp: new Date(),
-      },
-    ],
-    isLoading: false,
-    userData: {},
-    fearInfo: {},
-    step: 'name',
-  });
-
-  // Toggle chatbot visibility
-  const toggleChat = useCallback(() => {
-    setState(prev => ({ ...prev, isOpen: !prev.isOpen }));
-  }, []);
-
-  // Reset chat to initial state
-  const resetChat = useCallback(() => {
-    setState({
-      isOpen: true,
+  
+  // Initialize state with saved messages from localStorage if available
+  const [state, setState] = useState<ChatState>(() => {
+    // Try to load saved messages from localStorage
+    try {
+      const savedMessages = localStorage.getItem('chatMessages');
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages) as Message[];
+        console.log('Loaded saved messages from localStorage:', parsedMessages);
+        
+        // If we have saved messages, use them
+        if (parsedMessages && parsedMessages.length > 0) {
+          return {
+            isOpen: false,
+            messages: parsedMessages,
+            isLoading: false,
+            userData: {},
+            fearInfo: {},
+            step: 'completed', // Assume we're in a continued conversation
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved messages:', error);
+    }
+    
+    // Default state if no saved messages
+    return {
+      isOpen: false,
       messages: [
         {
           id: 'welcome',
@@ -72,69 +76,174 @@ export function useChatbot() {
       userData: {},
       fearInfo: {},
       step: 'name',
-    });
+    };
+  });
+
+  // Toggle chatbot visibility
+  const toggleChat = useCallback(() => {
+    setState(prev => ({ ...prev, isOpen: !prev.isOpen }));
   }, []);
+
+  // Persist messages to localStorage whenever they change
+  useEffect(() => {
+    if (state.messages.length > 0) {
+      try {
+        localStorage.setItem('chatMessages', JSON.stringify(state.messages));
+        console.log('Saved messages to localStorage:', state.messages);
+      } catch (error) {
+        console.error('Error saving messages to localStorage:', error);
+      }
+    }
+  }, [state.messages]);
+
+  // Reset chat to initial state
+  const resetChat = useCallback(() => {
+    // Clear saved messages from localStorage
+    try {
+      localStorage.removeItem('chatMessages');
+      console.log('Cleared saved messages from localStorage');
+    } catch (error) {
+      console.error('Error clearing saved messages:', error);
+    }
+    
+    // Create a new welcome message with a timestamp
+    const welcomeMessage = {
+      id: `welcome_${Date.now()}`,
+      role: 'assistant' as const,
+      content: "Hi there! I'm your Be Courageous guide. I'd like to help you understand and face your fears, but first I'd like to get to know you better. \n\n**What's your name?**",
+      timestamp: new Date(),
+    };
+    
+    // Reset the state completely
+    setState({
+      isOpen: true,
+      messages: [welcomeMessage],
+      isLoading: false,
+      userData: {},
+      fearInfo: {},
+      step: 'name',
+    });
+    
+    // Save the initial message to localStorage
+    try {
+      localStorage.setItem('chatMessages', JSON.stringify([welcomeMessage]));
+      console.log('Saved initial message to localStorage');
+    } catch (error) {
+      console.error('Error saving initial message to localStorage:', error);
+    }
+    
+    // Show a toast notification
+    toast({
+      title: "Conversation Reset",
+      description: "Started a new conversation.",
+      duration: 3000,
+    });
+  }, [toast]);
 
   // Process the message and determine the next step in the conversation flow
   const processMessage = useCallback((message: string, currentStep: ChatState['step'], currentUserData: UserData) => {
-    let nextStep = currentStep;
+    console.log(`Processing message for step: ${currentStep}`, message);
+    
+    // Create a copy of the current user data
     const updatedUserData = { ...currentUserData };
+    let nextStep = currentStep;
 
-    // Simple state machine to guide the conversation for user data collection
+    // Update the appropriate field based on the current step
     switch (currentStep) {
       case 'name':
-        updatedUserData.name = message.trim();
+        updatedUserData.name = message;
+        nextStep = 'fear';
+        break;
+      case 'fear':
+        updatedUserData.fear = message;
         nextStep = 'email';
         break;
       case 'email':
-        updatedUserData.email = message.trim();
+        updatedUserData.email = message;
         nextStep = 'phone';
         break;
       case 'phone':
-        updatedUserData.phone = message.trim();
+        // Allow skipping phone
+        if (message.toLowerCase() !== 'skip') {
+          updatedUserData.phone = message;
+        }
         nextStep = 'birthday';
         break;
       case 'birthday':
-        updatedUserData.birthday = message.trim();
+        // Allow skipping birthday
+        if (message.toLowerCase() !== 'skip') {
+          updatedUserData.birthday = message;
+        }
         nextStep = 'adventures';
         break;
       case 'adventures':
-        // Extract potentially feared activities from user message
-        const activities = ['skydiving', 'hang gliding', 'rock climbing', 'swimming with sharks', 
-                           'base jumping', 'kayaking', 'wing walking', 'bungee jumping', 
-                           'zip lines', 'rope swings', 'swimming with whales', 'deep water diving'];
-        
-        // Try to extract mentioned activities
-        const mentionedActivities = activities.filter(activity => 
-          message.toLowerCase().includes(activity.toLowerCase()));
-        
-        // If none found, just save the raw input
-        updatedUserData.adventures = mentionedActivities.length > 0 
-          ? mentionedActivities 
-          : message.split(',').map(item => item.trim());
-        
+        // Parse adventures as an array
+        updatedUserData.adventures = message
+          .split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
         nextStep = 'confirmation';
         break;
       case 'confirmation':
-        if (message.toLowerCase().includes('yes') || message.toLowerCase().includes('correct')) {
+        // If user confirms, move to completed
+        if (message.toLowerCase().includes('yes')) {
           nextStep = 'completed';
-          // Save to Airtable here, but we'll do it in the sendMessage function
+          
+          // Log the final user data
+          console.log('User data confirmed:', updatedUserData);
+          
+          // Here we would typically save to Airtable
+          // For now, just log that we would save
+          console.log('Would save to Airtable:', {
+            name: updatedUserData.name,
+            email: updatedUserData.email,
+            phone: updatedUserData.phone || 'Not provided',
+            birthday: updatedUserData.birthday || 'Not provided',
+            adventures: updatedUserData.adventures?.join(', ') || 'None specified'
+          });
         } else {
-          // If the user says the information is not correct, go back to the beginning
-          updatedUserData.name = undefined;
-          updatedUserData.email = undefined;
-          updatedUserData.phone = undefined;
-          updatedUserData.birthday = undefined;
-          updatedUserData.adventures = undefined;
+          // If user says no, restart from name
           nextStep = 'name';
+          // Clear user data
+          return { 
+            nextStep, 
+            updatedUserData: {} 
+          };
         }
         break;
-      case 'completed':
-        // After saving to Airtable, continue with normal conversation
+      default:
+        // For any other step, just keep the conversation going
         break;
     }
 
+    console.log(`Next step: ${nextStep}`, updatedUserData);
     return { nextStep, updatedUserData };
+  }, []);
+
+  // Get a simple response for testing
+  const getResponse = useCallback((message: string, currentStep: ChatState['step'], userData: UserData) => {
+    if (currentStep === 'name') {
+      return `Nice to meet you, ${message}! What's something you're afraid of that you'd like to overcome?`;
+    } else if (currentStep === 'fear') {
+      return `I understand that ${message} can be scary. What email address can we reach you at?`;
+    } else if (currentStep === 'email') {
+      return `Thanks for sharing your email. What's your phone number? (This is optional, you can say 'skip' if you prefer not to share it)`;
+    } else if (currentStep === 'phone') {
+      return `Got it! When is your birthday? (Format: MM/DD/YYYY, or you can say 'skip')`;
+    } else if (currentStep === 'birthday') {
+      return `Thanks for that information! What are the top 3 adventure activities you're most scared of but interested in trying?`;
+    } else if (currentStep === 'adventures') {
+      const adventures = message.split(',').map(a => a.trim()).join(', ');
+      return `**Thank you for sharing!** Here's what I've got:\n\n- **Name**: ${userData.name}\n- **Fear**: ${userData.fear}\n- **Email**: ${userData.email}\n- **Phone**: ${userData.phone || "Not provided"}\n- **Birthday**: ${userData.birthday || "Not provided"}\n- **Top Feared Adventures**: ${adventures}\n\n**Is this information correct?** (Yes/No)`;
+    } else if (currentStep === 'confirmation') {
+      if (message.toLowerCase().includes('yes')) {
+        return `Great! I've saved your information. Now, let's talk more about your fear of ${userData.fear}. What specifically about ${userData.fear} makes you afraid?`;
+      } else {
+        return `I understand. Let's start over. What's your name?`;
+      }
+    } else {
+      return `Thanks for sharing. I'm here to help you with your fear of ${userData.fear || 'your fears'}. Is there anything specific you'd like to know?`;
+    }
   }, []);
 
   // Generate next question based on conversation step
@@ -142,170 +251,232 @@ export function useChatbot() {
     switch (step) {
       case 'name':
         return "**What's your name?**";
+      case 'fear':
+        return `**Thanks, ${userData.name}!** What's something you're afraid of that you'd like to overcome?`;
       case 'email':
-        return `**Thanks, ${userData.name}!** What email address can we reach you at?`;
+        return `**I understand that ${userData.fear} can be scary.** What email address can we reach you at?`;
       case 'phone':
-        return "**Great!** What's your phone number? (This is optional, you can say 'skip' if you prefer not to share it)";
+        return `**Thanks for your email!** What's your phone number? (This is optional, you can say 'skip' if you prefer not to share it)`;
       case 'birthday':
         return "**Thanks for that!** When is your birthday? (Format: MM/DD/YYYY, or you can say 'skip')";
       case 'adventures':
         return "**Now, I'd love to know about your fears.** What are the top 3 adventure activities you're most scared of but interested in trying?";
       case 'confirmation':
         const adventures = userData.adventures?.join(', ') || "None specified";
-        return `**Thank you for sharing!** Here's what I've got:\n\n- **Name**: ${userData.name}\n- **Email**: ${userData.email}\n- **Phone**: ${userData.phone || "Not provided"}\n- **Birthday**: ${userData.birthday || "Not provided"}\n- **Top Feared Adventures**: ${adventures}\n\n**Is this information correct?** (Yes/No)`;
+        return `**Thank you for sharing!** Here's what I've got:\n\n- **Name**: ${userData.name}\n- **Fear**: ${userData.fear}\n- **Email**: ${userData.email}\n- **Phone**: ${userData.phone || "Not provided"}\n- **Birthday**: ${userData.birthday || "Not provided"}\n- **Top Feared Adventures**: ${adventures}\n\n**Is this information correct?** (Yes/No)`;
       case 'completed':
-        return "**Great! I've saved your information.** Now, let's talk more about your fears. What specifically makes you afraid of these activities?";
+        return `**Great! I've saved your information.** Now, let's talk more about your fear of ${userData.fear}. What specifically makes you afraid of ${userData.fear}?`;
       default:
-        return "";
+        return '';
     }
   }, []);
 
-  // Send message to OpenAI API
-  const sendMessage = useCallback(async (message: string) => {
-    if (!message.trim()) return;
+  // Send a message to the chatbot
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return;
 
-    // Add user message to chat
+    console.log('Sending message:', content);
+    
+    // Create a unique ID for this message
+    const messageId = `msg_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Create the user message
     const userMessage: Message = {
-      id: `user_${Date.now()}`,
+      id: messageId,
       role: 'user',
-      content: message,
+      content,
       timestamp: new Date(),
     };
-
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      isLoading: true,
-    }));
+    
+    // Update state with the user message
+    setState(prev => {
+      const updatedMessages = [...prev.messages, userMessage];
+      console.log('Updated messages with user message:', updatedMessages);
+      
+      // Save to localStorage immediately
+      try {
+        localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
+      } catch (error) {
+        console.error('Error saving messages to localStorage:', error);
+      }
+      
+      return {
+        ...prev,
+        messages: updatedMessages,
+        isLoading: true,
+      };
+    });
 
     try {
-      // Process the message to determine conversation flow
-      let { nextStep, updatedUserData } = processMessage(message, state.step, state.userData);
-
-      // Save to Airtable if we've reached the confirmation step and user confirmed
-      if (state.step === 'confirmation' && nextStep === 'completed' && 
-          updatedUserData.name && updatedUserData.email) { // Check required fields exist
-        
-        // Cast the userData to the required type since we've checked the required fields
-        const userData = {
-          name: updatedUserData.name,
-          email: updatedUserData.email,
-          phone: updatedUserData.phone,
-          birthday: updatedUserData.birthday,
-          adventures: updatedUserData.adventures
-        };
-        
-        const saveResult = await saveUserToAirtable(userData);
-        if (!saveResult.success) {
-          toast({
-            title: "Error",
-            description: saveResult.message || "Failed to save your information. Please try again.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Success",
-            description: "Your information has been saved successfully!",
-          });
-        }
-      } else if (state.step === 'confirmation' && nextStep === 'completed') {
-        // Handle the case where required fields are missing
-        toast({
-          title: "Error",
-          description: "Missing required information. Please provide your name and email.",
-          variant: "destructive",
-        });
-        // Reset to name step if information is missing
-        nextStep = 'name';
-      }
-
-      // Format history for OpenAI
-      const history = state.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-      }));
-
-      // Add system message based on the current step
-      let systemMessage = "You are a helpful AI assistant for Be Courageous, a company that helps people face their fears through adventure activities. Format your responses using Markdown for better readability with **bold text**, bullet points, and structure. Be warm, empathetic and encouraging.";
-      
-      switch (nextStep) {
-        case 'name':
-          systemMessage += " Ask for the user's name in a friendly way.";
-          break;
-        case 'email':
-          systemMessage += " Ask for the user's email address in a friendly way.";
-          break;
-        case 'phone':
-          systemMessage += " Ask for the user's phone number, but mention it's optional.";
-          break;
-        case 'birthday':
-          systemMessage += " Ask for the user's birthday in MM/DD/YYYY format, but mention it's optional.";
-          break;
-        case 'adventures':
-          systemMessage += " Ask the user to share their top 3 adventure activities they're scared of but interested in trying.";
-          break;
-        case 'confirmation':
-          systemMessage += " Show the user the information they've provided and ask them to confirm if it's correct.";
-          break;
-        case 'completed':
-          systemMessage += " Thank the user for sharing their information. Now focus on understanding their fears related to the activities they mentioned.";
-          break;
-      }
-
-      // Add the system message to the history
-      history.unshift({
-        role: 'system',
-        content: systemMessage,
+      // Create a timeout promise to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
       });
 
-      // Send message to API
-      const response = await sendMessageToOpenAI(message, history);
+      // Process message with timeout
+      const processMessageWithTimeout = async () => {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Process the message to determine conversation flow
+        let { nextStep, updatedUserData } = processMessage(content, state.step, state.userData);
 
-      // Log conversation to Airtable
-      await logConversationToAirtable(
-        [...history, { role: 'user', content: message }],
-        userId,
-        state.fearInfo
-      );
-
-      // Get the next question to guide the conversation
-      const nextQuestion = getNextQuestion(nextStep, updatedUserData);
-      
-      // Add assistant response to chat
-      const assistantMessage: Message = {
-        id: `assistant_${Date.now()}`,
-        role: 'assistant',
-        content: response.message + (nextQuestion ? '\n\n' + nextQuestion : ''),
-        timestamp: new Date(),
+        // If the user has confirmed their information, save to Airtable
+        if (state.step === 'confirmation' && content.toLowerCase().includes('yes')) {
+          console.log('User confirmed information, saving to Airtable:', updatedUserData);
+          
+          // Check if we have the required fields
+          if (updatedUserData.name && updatedUserData.email) {
+            try {
+              // Save to Airtable with timeout
+              const savePromise = saveUserToAirtable({
+                name: updatedUserData.name,
+                email: updatedUserData.email,
+                phone: updatedUserData.phone,
+                birthday: updatedUserData.birthday,
+                adventures: updatedUserData.adventures
+              });
+              
+              const saveResult = await Promise.race([savePromise, timeoutPromise]);
+              
+              if (saveResult.success) {
+                toast({
+                  title: "Success",
+                  description: "Your information has been saved successfully!",
+                  duration: 5000,
+                });
+                console.log('Successfully saved to Airtable:', saveResult);
+              } else {
+                toast({
+                  title: "Error",
+                  description: saveResult.message || "Failed to save your information. Please try again.",
+                  variant: "destructive",
+                  duration: 5000,
+                });
+                console.error('Failed to save to Airtable:', saveResult);
+              }
+            } catch (error) {
+              console.error('Error saving to Airtable:', error);
+              toast({
+                title: "Error",
+                description: error instanceof Error && error.message === 'Request timed out' 
+                  ? "Request timed out. Please try again." 
+                  : "Failed to save your information. Please try again.",
+                variant: "destructive",
+                duration: 5000,
+              });
+              
+              // Don't reset on timeout, just continue the conversation
+              if (!(error instanceof Error && error.message === 'Request timed out')) {
+                nextStep = 'completed';
+              }
+            }
+          } else {
+            toast({
+              title: "Error",
+              description: "Missing required information. Please provide your name and email.",
+              variant: "destructive",
+              duration: 5000,
+            });
+            console.error('Missing required fields for Airtable:', updatedUserData);
+            
+            // Reset to name step if information is missing
+            nextStep = 'name';
+            updatedUserData = {};
+          }
+        }
+        
+        // Get response using our simple function instead of API call
+        const responseContent = getResponse(content, state.step, state.userData);
+        
+        return { nextStep, updatedUserData, responseContent };
       };
 
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        isLoading: false,
-        userData: updatedUserData,
-        step: nextStep,
-      }));
+      // Execute the process with timeout
+      const { nextStep, updatedUserData, responseContent } = await Promise.race([
+        processMessageWithTimeout(),
+        timeoutPromise
+      ]);
+      
+      // Create the assistant's response
+      const assistantMessage: Message = {
+        id: `resp_${messageId}`,
+        role: 'assistant',
+        content: responseContent,
+        timestamp: new Date(),
+      };
+      
+      // Update state with the assistant's response
+      setState(prev => {
+        const updatedMessages = [...prev.messages, assistantMessage];
+        console.log('Updated messages with assistant response:', updatedMessages);
+        
+        // Save to localStorage immediately
+        try {
+          localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
+        } catch (error) {
+          console.error('Error saving messages to localStorage:', error);
+        }
+        
+        return {
+          ...prev,
+          messages: updatedMessages,
+          isLoading: false,
+          userData: updatedUserData,
+          step: nextStep,
+        };
+      });
     } catch (error) {
-      console.error('Error in chat:', error);
+      console.error('Error in sendMessage:', error);
+      
+      // Create a fallback message for timeout errors
+      const errorMessage = error instanceof Error && error.message === 'Request timed out'
+        ? "I'm sorry, but the request timed out. Please try again."
+        : "I'm sorry, but something went wrong. Please try again.";
+      
+      // Create an error response message
+      const errorResponseMessage: Message = {
+        id: `error_${messageId}`,
+        role: 'assistant',
+        content: errorMessage,
+        timestamp: new Date(),
+      };
+      
+      // Update state to show error and stop loading
+      setState(prev => {
+        const updatedMessages = [...prev.messages, errorResponseMessage];
+        
+        // Save to localStorage
+        try {
+          localStorage.setItem('chatMessages', JSON.stringify(updatedMessages));
+        } catch (storageError) {
+          console.error('Error saving messages to localStorage:', storageError);
+        }
+        
+        return {
+          ...prev,
+          messages: updatedMessages,
+          isLoading: false,
+        };
+      });
+      
       toast({
         title: "Error",
-        description: "Sorry, there was a problem processing your message. Please try again.",
+        description: error instanceof Error && error.message === 'Request timed out'
+          ? "Request timed out. Please try again."
+          : "Failed to send message. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
-
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-      }));
     }
-  }, [state.messages, state.step, state.userData, state.fearInfo, processMessage, getNextQuestion, toast, userId]);
+  }, [state.step, state.userData, toast, processMessage, getResponse]);
 
   return {
     ...state,
     sendMessage,
     toggleChat,
     resetChat,
+    getResponse,
   };
 }
 

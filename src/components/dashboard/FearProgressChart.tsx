@@ -49,9 +49,8 @@ const FearProgressChart: React.FC<FearProgressChartProps> = ({ data }) => {
     publicSpeaking: '#f97316',
     heights: '#e11d48',
     rejection: '#8b5cf6',
-    water: '#0ea5e9',
+    ocean: '#0ea5e9',
     confined: '#10b981',
-    risk: '#eab308',
   };
 
   return (

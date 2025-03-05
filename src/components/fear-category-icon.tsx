@@ -26,21 +26,11 @@ export const FearCategoryIcon: React.FC<FearCategoryIconProps> = ({
     case 'heights':
       return <ArrowUp className={className} />;
     case 'water':
-      return <Waves className={className} />;
-    case 'ocean':
       return <Ship className={className} />;
-    case 'falling':
-      return <HeartPulse className={className} />; // Using HeartPulse instead of PersonFalling
-    case 'speed':
-      return <Gauge className={className} />;
-    case 'animals':
-      return <Dog className={className} />;
     case 'social':
       return <Users className={className} />;
     case 'confined':
       return <Box className={className} />;
-    case 'risk':
-      return <CircleDot className={className} />;
     default:
       return <CircleDot className={className} />;
   }

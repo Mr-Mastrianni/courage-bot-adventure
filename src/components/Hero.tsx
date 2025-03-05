@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, Fragment } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
 import '../styles/micro-interactions.css';
-import FloatingActionButton from './FloatingActionButton';
-import { StartJourneyIcon, HelpIcon, ExploreIcon, CourageIcon, ActivityIcon } from './CustomIcons';
+import { HelpIcon, ExploreIcon, CourageIcon, ActivityIcon } from './CustomIcons';
 import FearAssessment from './FearAssessment';
 
 // Array of background images for the slideshow
@@ -144,11 +143,6 @@ const Hero = () => {
     }
   };
 
-  const startJourney = () => {
-    // Open the fear assessment quiz
-    setAssessmentOpen(true);
-  };
-
   return (
     <div ref={heroSectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Loading indicator */}
@@ -257,14 +251,6 @@ const Hero = () => {
         </Button>
         <div className="text-center mt-2 text-growth-200 hero-subtext text-sm opacity-80">Explore</div>
       </div>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton 
-        onClick={startJourney} 
-        icon={<StartJourneyIcon size={28} color="white" />} 
-        label="Start Your Journey"
-        position="left"
-      />
 
       {/* Fear Assessment Modal */}
       <FearAssessment 

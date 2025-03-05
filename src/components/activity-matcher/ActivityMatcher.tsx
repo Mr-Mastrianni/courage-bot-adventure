@@ -235,39 +235,31 @@ const ActivityMatcher: React.FC<ActivityMatcherProps> = ({ className = '' }) => 
                   <FolderHeart size={14} className="mr-1" />
                   Recommended For You
                 </TabsTrigger>
-                <TabsTrigger value="saved">Saved</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all" className="mt-6">
-                <ActivityList className="pb-8" viewMode={viewMode} />
+                <ActivityList className="pb-8" viewMode={viewMode} listType="all" />
               </TabsContent>
               
               <TabsContent value="recommended" className="mt-6">
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <FolderHeart size={48} className="text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium mb-2">
-                    Complete your profile to get personalized recommendations
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md">
-                    We'll provide activities tailored to your fear profile and preferences.
-                  </p>
-                  <Button>Complete Your Profile</Button>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="saved" className="mt-6">
-                <div className="flex flex-col items-center justify-center p-12 text-center">
-                  <FolderHeart size={48} className="text-muted-foreground mb-4" />
-                  <h3 className="text-xl font-medium mb-2">
-                    You haven't saved any activities yet
-                  </h3>
-                  <p className="text-muted-foreground mb-6 max-w-md">
-                    Browse activities and save the ones you're interested in.
-                  </p>
-                  <Button onClick={() => setActiveTab('all')}>
-                    Browse Activities
-                  </Button>
-                </div>
+                {fearAssessmentData ? (
+                  <ActivityList 
+                    className="pb-8" 
+                    viewMode={viewMode} 
+                    listType="recommended"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-12 text-center">
+                    <FolderHeart size={48} className="text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-medium mb-2">
+                      Complete your profile to get personalized recommendations
+                    </h3>
+                    <p className="text-muted-foreground mb-6 max-w-md">
+                      We'll provide activities tailored to your fear profile and preferences.
+                    </p>
+                    <Button>Complete Your Profile</Button>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

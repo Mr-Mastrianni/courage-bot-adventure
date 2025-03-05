@@ -27,15 +27,34 @@ import {
 interface ActivityListProps {
   className?: string;
   viewMode?: 'grid' | 'list';
+  listType?: 'all' | 'recommended';
 }
 
 const ActivityList: React.FC<ActivityListProps> = ({ 
   className = '',
-  viewMode = 'grid' 
+  viewMode = 'grid',
+  listType = 'all'
 }) => {
-  const { filteredActivities, activeFilters } = useActivityMatcher();
+  const { filteredActivities, activeFilters, matchedActivities } = useActivityMatcher();
   const [selectedActivity, setSelectedActivity] = React.useState<Activity | null>(null);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  
+  // Get the appropriate activities based on list type
+  const activitiesToDisplay = React.useMemo(() => {
+    if (listType === 'recommended') {
+      // For recommended tab, show only top matching activities (top 30%)
+      const sortedByScore = [...matchedActivities].sort((a, b) => 
+        (b.matchScore || 0) - (a.matchScore || 0)
+      );
+      
+      // Get top 30% of activities or at least 5 activities
+      const topCount = Math.max(5, Math.ceil(sortedByScore.length * 0.3));
+      return sortedByScore.slice(0, topCount);
+    }
+    
+    // For all activities tab, show filtered activities
+    return filteredActivities;
+  }, [filteredActivities, matchedActivities, listType]);
   
   // Function to handle viewing activity details
   const handleViewDetails = (activity: Activity) => {
@@ -72,7 +91,7 @@ const ActivityList: React.FC<ActivityListProps> = ({
   };
   
   // Render empty state if no activities are found
-  if (filteredActivities.length === 0) {
+  if (activitiesToDisplay.length === 0) {
     return (
       <div className={`flex flex-col items-center justify-center p-8 text-center ${className}`}>
         <AlertCircle size={48} className="text-muted-foreground mb-4" />
@@ -95,7 +114,7 @@ const ActivityList: React.FC<ActivityListProps> = ({
       {/* Grid View */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredActivities.map((activity) => (
+          {activitiesToDisplay.map((activity) => (
             <ActivityCard 
               key={activity.id}
               activity={activity}
@@ -108,7 +127,7 @@ const ActivityList: React.FC<ActivityListProps> = ({
       {/* List View */}
       {viewMode === 'list' && (
         <div className="space-y-4">
-          {filteredActivities.map((activity) => (
+          {activitiesToDisplay.map((activity) => (
             <div 
               key={activity.id}
               className="flex flex-col sm:flex-row border rounded-lg overflow-hidden hover:border-primary/20 transition-colors"

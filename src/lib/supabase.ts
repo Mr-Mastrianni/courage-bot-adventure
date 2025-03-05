@@ -16,6 +16,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const url = supabaseUrl || 'https://bzryrvfjfzchzbmxzdyi.supabase.co';
 const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ6cnlydmZqZnpjaHpibXh6ZHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA3MTA2NDEsImV4cCI6MjA1NjI4NjY0MX0.Kqph8KJDbvwQdTHlpu0uhbaTYleopuftGgDI5lZfoI8';
 
-export const supabase = createClient(url, key);
+// Configure client with proper storage options for session persistence
+export const supabase = createClient(url, key, {
+  auth: {
+    persistSession: true,
+    storageKey: 'supabase.auth.token',
+    storage: window.localStorage
+  }
+});
 
 export default supabase;

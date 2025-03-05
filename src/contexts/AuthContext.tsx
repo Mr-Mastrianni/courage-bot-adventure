@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 interface ProfileData {
   full_name: string;
   avatar_url?: string | null;
-  age_range?: string | null;
+  date_of_birth?: string | null;
   key_fears?: string[] | null;
   experience_level?: string | null;
   challenge_intensity?: string | null;
@@ -155,12 +155,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: userData.avatar_url || null,
             is_new_user: true, // Add a flag to identify new users
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) {
         console.error('Sign up error:', error.message);
         return { success: false, error: error.message };
+      }
+
+      // Check if email confirmation is needed
+      if (data?.user?.identities?.length === 0) {
+        return { 
+          success: false, 
+          error: 'This email is already registered. Please check your email for the confirmation link or try logging in.' 
+        };
       }
 
       if (data?.user) {
@@ -211,9 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      
-      // Clear any local storage or state
-      localStorage.removeItem('supabase.auth.token');
       
       // Clear session and user states
       setSession(null);
@@ -298,7 +304,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_id: user.id,
         full_name: userData.full_name,
         avatar_url: userData.avatar_url,
-        age_range: userData.age_range,
+        date_of_birth: userData.date_of_birth,
         key_fears: userData.key_fears,
         experience_level: userData.experience_level,
         challenge_intensity: userData.challenge_intensity,
@@ -501,7 +507,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Count completed fields
           if (data.full_name) completedFields++;
           if (data.avatar_url) completedFields++;
-          if (data.age_range) completedFields++;
+          if (data.date_of_birth) completedFields++;
           if (data.key_fears && data.key_fears.length > 0) completedFields++;
           if (data.experience_level) completedFields++;
           if (data.challenge_intensity) completedFields++;

@@ -9,8 +9,9 @@ import Avatar from '../components/Avatar';
 import ProfileCompletionIndicator from '../components/ProfileCompletionIndicator';
 import FearTagSelector from '../components/FearTagSelector';
 import ThemeSwitcher from '../components/personalization/ThemeSwitcher';
-import { ChevronRight, ChevronDown, Palette, Layout, AlertTriangle } from 'lucide-react';
+import { ChevronRight, ChevronDown, Palette, Layout, AlertTriangle, Calendar } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { formatDateOfBirth } from '@/utils/dateUtils';
 
 const experienceLevels = [
   { value: 'beginner', label: 'Beginner - I\'m just starting my courage journey' },
@@ -53,7 +54,7 @@ const Profile: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [ageRange, setAgeRange] = useState<string | null>(null);
+  const [dateOfBirth, setDateOfBirth] = useState<string | null>(null);
   const [keyFears, setKeyFears] = useState<string[]>([]);
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [challengeIntensity, setChallengeIntensity] = useState<string | null>(null);
@@ -102,7 +103,7 @@ const Profile: React.FC = () => {
         if (data) {
           setFullName(data.full_name || '');
           setAvatarUrl(data.avatar_url || null);
-          setAgeRange(data.age_range || null);
+          setDateOfBirth(data.date_of_birth || null);
           setKeyFears(data.key_fears || []);
           setExperienceLevel(data.experience_level || null);
           setChallengeIntensity(data.challenge_intensity || null);
@@ -143,7 +144,7 @@ const Profile: React.FC = () => {
       const { success, error } = await updateProfile({
         full_name: fullName.trim(),
         avatar_url: avatarUrl,
-        age_range: ageRange,
+        date_of_birth: dateOfBirth,
         key_fears: keyFears.length > 0 ? keyFears : null,
         experience_level: experienceLevel,
         challenge_intensity: challengeIntensity,
@@ -249,7 +250,7 @@ const Profile: React.FC = () => {
   const profileData = {
     full_name: fullName,
     avatar_url: avatarUrl,
-    age_range: ageRange,
+    date_of_birth: dateOfBirth,
     key_fears: keyFears,
     experience_level: experienceLevel,
     challenge_intensity: challengeIntensity,
@@ -326,21 +327,24 @@ const Profile: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">Age Range</label>
-                <select
-                  id="ageRange"
-                  name="ageRange"
-                  value={ageRange || ''}
-                  onChange={(e) => setAgeRange(e.target.value || null)}
-                  className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                >
-                  <option value="">Select an age range</option>
-                  {ageRanges.map((range) => (
-                    <option key={range.value} value={range.value}>
-                      {range.label}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Date of Birth</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    value={dateOfBirth || ''}
+                    onChange={(e) => setDateOfBirth(e.target.value || null)}
+                    className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                    max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                  />
+                  <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                </div>
+                {dateOfBirth && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {formatDateOfBirth(dateOfBirth, 'long')}
+                  </p>
+                )}
               </div>
               
               <div>

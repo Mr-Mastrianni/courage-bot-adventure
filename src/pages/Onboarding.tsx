@@ -2,41 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Avatar from '../components/Avatar';
-import FearTagSelector from '../components/FearTagSelector';
-import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast'; // Direct import
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import DatabaseSchemaAlert from '@/components/DatabaseSchemaAlert';
 
-// Step data from the profile.tsx constants
-const experienceLevels = [
-  { value: 'beginner', label: 'Beginner - I\'m just starting my courage journey' },
-  { value: 'intermediate', label: 'Intermediate - I\'ve faced some fears before' },
-  { value: 'advanced', label: 'Advanced - I regularly push my comfort zone' },
-  { value: 'expert', label: 'Expert - I help others overcome their fears' },
-];
-
-const challengeIntensities = [
-  { value: 'gentle', label: 'Gentle - Small, manageable steps' },
-  { value: 'moderate', label: 'Moderate - Balanced challenges' },
-  { value: 'intense', label: 'Intense - Push me out of my comfort zone' },
-  { value: 'extreme', label: 'Extreme - Test my limits' },
-];
-
-const learningStyles = [
-  { value: 'visual', label: 'Visual - I learn best by seeing' },
-  { value: 'auditory', label: 'Auditory - I learn best by hearing' },
-  { value: 'reading', label: 'Reading - I learn best by reading' },
-  { value: 'kinesthetic', label: 'Kinesthetic - I learn best by doing' },
-];
-
-const ageRanges = [
-  { value: 'under18', label: 'Under 18' },
-  { value: '18-24', label: '18-24' },
-  { value: '25-34', label: '25-34' },
-  { value: '35-44', label: '35-44' },
-  { value: '45-54', label: '45-54' },
-  { value: '55-64', label: '55-64' },
-  { value: '65+', label: '65+' },
-];
+// Import refactored components
+import {
+  WelcomeStep,
+  BasicInfoStep,
+  CourageProfileStep,
+  LearningDetailsStep,
+  CompletionStep
+} from '@/components/onboarding/OnboardingSteps';
+import OnboardingFearAssessment from '@/components/onboarding/OnboardingFearAssessment';
 
 const Onboarding: React.FC = () => {
   const { user, updateProfile, getUserProfile } = useAuth();
@@ -49,13 +27,14 @@ const Onboarding: React.FC = () => {
   // Profile state
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [ageRange, setAgeRange] = useState<string | null>(null);
+  const [dateOfBirth, setDateOfBirth] = useState<string | null>(null);
   const [location, setLocation] = useState('');
   const [keyFears, setKeyFears] = useState<string[]>([]);
   const [experienceLevel, setExperienceLevel] = useState<string | null>(null);
   const [challengeIntensity, setChallengeIntensity] = useState<string | null>(null);
   const [learningStyle, setLearningStyle] = useState<string | null>(null);
   const [bio, setBio] = useState('');
+  const [fearAssessmentResults, setFearAssessmentResults] = useState<any[]>([]);
   
   useEffect(() => {
     // Check if we already have user data
@@ -79,7 +58,7 @@ const Onboarding: React.FC = () => {
         if (data) {
           if (data.full_name) setFullName(data.full_name);
           if (data.avatar_url) setAvatarUrl(data.avatar_url);
-          if (data.age_range) setAgeRange(data.age_range);
+          if (data.date_of_birth) setDateOfBirth(data.date_of_birth);
           if (data.key_fears && Array.isArray(data.key_fears)) setKeyFears(data.key_fears);
           if (data.experience_level) setExperienceLevel(data.experience_level);
           if (data.challenge_intensity) setChallengeIntensity(data.challenge_intensity);
@@ -107,81 +86,41 @@ const Onboarding: React.FC = () => {
     checkUserProfile();
   }, [user, getUserProfile, navigate, toast]);
   
+  // Handle fear assessment completion
+  const handleFearAssessmentComplete = (results: any[]) => {
+    console.log('Fear assessment completed with results:', results);
+    setFearAssessmentResults(results);
+    
+    // Extract fear categories for the profile
+    const topFearCategories = results.slice(0, 3).map(fear => fear.fear);
+    setKeyFears(topFearCategories);
+    
+    // Move to the completion step
+    setCurrentStep(currentStep + 1);
+  };
+  
   const steps = [
     {
       title: "Welcome to Be Courageous",
       description: "Let's set up your profile to personalize your courage journey",
-      component: (
-        <div className="space-y-6 text-center">
-          <div className="bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto">
-            <CheckCircle className="w-10 h-10 text-blue-600" />
-          </div>
-          <h2 className="text-xl font-semibold">Welcome to Be Courageous!</h2>
-          <p className="text-gray-600">
-            We're excited to help you face your fears and grow your courage.
-            Let's set up your profile in a few easy steps.
-          </p>
-        </div>
-      ),
+      component: <WelcomeStep />,
       isValid: () => true, // Always valid to proceed
     },
     {
       title: "Basic Information",
       description: "Tell us who you are",
       component: (
-        <div className="space-y-6">
-          <div className="flex justify-center mb-6">
-            <Avatar 
-              url={avatarUrl} 
-              size={100} 
-              onUpload={(url) => setAvatarUrl(url)} 
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              placeholder="Enter your full name"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Age Range</label>
-            <select
-              id="ageRange"
-              name="ageRange"
-              value={ageRange || ''}
-              onChange={(e) => setAgeRange(e.target.value || null)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            >
-              <option value="">Select an age range</option>
-              {ageRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              placeholder="City, Country"
-            />
-          </div>
-        </div>
+        <BasicInfoStep
+          fullName={fullName}
+          setFullName={setFullName}
+          dateOfBirth={dateOfBirth}
+          setDateOfBirth={setDateOfBirth}
+          location={location}
+          setLocation={setLocation}
+          avatarUrl={avatarUrl}
+          setAvatarUrl={setAvatarUrl}
+          Avatar={Avatar}
+        />
       ),
       isValid: () => !!fullName.trim(), // Must have at least a name
     },
@@ -189,113 +128,42 @@ const Onboarding: React.FC = () => {
       title: "Your Courage Profile",
       description: "Tell us about your fears and preferences",
       component: (
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Key Fears *</label>
-            <FearTagSelector
-              selectedFears={keyFears}
-              onChange={setKeyFears}
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Select or enter fears you want to overcome
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Experience Level *</label>
-            <select
-              id="experienceLevel"
-              name="experienceLevel"
-              value={experienceLevel || ''}
-              onChange={(e) => setExperienceLevel(e.target.value || null)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            >
-              <option value="">Select your experience level</option>
-              {experienceLevels.map((level) => (
-                <option key={level.value} value={level.value}>
-                  {level.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Challenge Intensity Preference</label>
-            <select
-              id="challengeIntensity"
-              name="challengeIntensity"
-              value={challengeIntensity || ''}
-              onChange={(e) => setChallengeIntensity(e.target.value || null)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            >
-              <option value="">Select challenge intensity</option>
-              {challengeIntensities.map((intensity) => (
-                <option key={intensity.value} value={intensity.value}>
-                  {intensity.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        <CourageProfileStep
+          keyFears={keyFears}
+          setKeyFears={setKeyFears}
+          experienceLevel={experienceLevel}
+          setExperienceLevel={setExperienceLevel}
+          challengeIntensity={challengeIntensity}
+          setChallengeIntensity={setChallengeIntensity}
+        />
       ),
-      isValid: () => keyFears.length > 0 && !!experienceLevel, // Must select fears and experience level
+      isValid: () => !!experienceLevel, // Must select experience level (fears will be set by assessment)
     },
     {
       title: "Learning & Final Details",
       description: "Almost done! Tell us how you learn best",
       component: (
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Learning Style</label>
-            <select
-              id="learningStyle"
-              name="learningStyle"
-              value={learningStyle || ''}
-              onChange={(e) => setLearningStyle(e.target.value || null)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            >
-              <option value="">Select your learning style</option>
-              {learningStyles.map((style) => (
-                <option key={style.value} value={style.value}>
-                  {style.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              placeholder="Tell us a bit about yourself and why you want to build courage"
-              rows={4}
-            ></textarea>
-          </div>
-        </div>
+        <LearningDetailsStep
+          learningStyle={learningStyle}
+          setLearningStyle={setLearningStyle}
+          bio={bio}
+          setBio={setBio}
+        />
       ),
       isValid: () => true, // These fields are optional
     },
     {
+      title: "Fear Assessment",
+      description: "Let's understand your fears better to personalize your journey",
+      component: (
+        <OnboardingFearAssessment onComplete={handleFearAssessmentComplete} />
+      ),
+      isValid: () => true, // Will be handled by the assessment component
+    },
+    {
       title: "Ready to Start Your Journey",
       description: "You're all set to begin your courage journey!",
-      component: (
-        <div className="space-y-6 text-center">
-          <div className="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto">
-            <CheckCircle className="w-10 h-10 text-green-600" />
-          </div>
-          <h2 className="text-xl font-semibold">Profile Completed!</h2>
-          <p className="text-gray-600">
-            Thanks for completing your profile. You're now ready to start your journey to becoming more courageous.
-          </p>
-          <p className="text-gray-600 mt-4">
-            Click "Finish" to go to your personalized dashboard.
-          </p>
-        </div>
-      ),
+      component: <CompletionStep />,
       isValid: () => true, // Always valid
     },
   ];
@@ -304,6 +172,11 @@ const Onboarding: React.FC = () => {
     if (currentStep === steps.length - 1) {
       handleFinish();
     } else if (steps[currentStep].isValid()) {
+      // Special case for fear assessment step - the component handles its own navigation
+      if (currentStep === 4) {
+        // This is handled by the onComplete callback in the assessment component
+        return;
+      }
       setCurrentStep(currentStep + 1);
     } else {
       setError('Please complete all required fields before proceeding.');
@@ -323,17 +196,30 @@ const Onboarding: React.FC = () => {
       setError(null);
       
       console.log('Starting profile save...');
-      console.log('Profile data to save:', {
+      
+      // Prepare fear assessment data
+      const fearAssessmentData = fearAssessmentResults.length > 0 
+        ? {
+            timestamp: new Date().toISOString(),
+            results: fearAssessmentResults
+          }
+        : null;
+      
+      const profileData = {
         full_name: fullName.trim(),
         avatar_url: avatarUrl,
-        age_range: ageRange,
+        date_of_birth: dateOfBirth,
         key_fears: keyFears,
         experience_level: experienceLevel,
         challenge_intensity: challengeIntensity,
         learning_style: learningStyle,
         bio: bio.trim() || null,
         location: location.trim() || null,
-      });
+        fear_assessment_results: fearAssessmentData,
+        last_assessment: fearAssessmentData ? new Date().toISOString() : null
+      };
+      
+      console.log('Profile data to save:', profileData);
       
       // Make sure we have a valid name
       if (!fullName.trim()) {
@@ -341,18 +227,6 @@ const Onboarding: React.FC = () => {
         setLoading(false);
         return;
       }
-      
-      const profileData = {
-        full_name: fullName.trim(),
-        avatar_url: avatarUrl,
-        age_range: ageRange,
-        key_fears: keyFears,
-        experience_level: experienceLevel,
-        challenge_intensity: challengeIntensity,
-        learning_style: learningStyle,
-        bio: bio.trim() || null,
-        location: location.trim() || null,
-      };
       
       console.log('Calling updateProfile...');
       console.log('Setting profile_completed = true');
@@ -377,11 +251,31 @@ const Onboarding: React.FC = () => {
           navigate('/dashboard');
         }, 1000);
       } else {
-        throw new Error(error);
+        // Check for specific error messages
+        if (error && error.includes('column "date_of_birth" does not exist')) {
+          setError('Database schema needs to be updated. Please apply the schema changes in update_schema.sql.');
+          console.error('Database schema error - date_of_birth column missing:', error);
+        } else if (error && error.includes('column "age_range" does not exist')) {
+          setError('Database schema has been partially updated. Please complete the schema changes.');
+          console.error('Database schema error - age_range column referenced but removed:', error);
+        } else {
+          setError(`Failed to save your profile: ${error || 'Unknown error'}`);
+          console.error('Profile save error:', error);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving profile:', err);
-      setError('Failed to save your profile. Please try again.');
+      // Provide more detailed error message if available
+      const errorMessage = err?.message || 'Unknown error occurred';
+      setError(`Failed to save your profile: ${errorMessage}. Please try again.`);
+      
+      // Log additional details for debugging
+      if (err?.code) {
+        console.error('Error code:', err.code);
+      }
+      if (err?.details) {
+        console.error('Error details:', err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -420,6 +314,7 @@ const Onboarding: React.FC = () => {
           {error && (
             <div className="p-3 mb-4 bg-red-100 text-red-700 rounded">
               {error}
+              <DatabaseSchemaAlert errorMessage={error} />
             </div>
           )}
           
@@ -428,39 +323,41 @@ const Onboarding: React.FC = () => {
             {currentStepData.component}
           </div>
           
-          {/* Navigation buttons */}
-          <div className="flex justify-between mt-8">
-            <button
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className={`flex items-center px-4 py-2 rounded ${
-                currentStep === 0 
-                  ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500' 
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <ArrowLeft size={16} className="mr-2" />
-              Back
-            </button>
-            
-            <button
-              onClick={handleNext}
-              disabled={loading}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center">
-                  <span className="animate-spin h-4 w-4 mr-2 border-t-2 border-b-2 border-white rounded-full"></span>
-                  Processing...
-                </span>
-              ) : (
-                <>
-                  {currentStep === steps.length - 1 ? 'Finish' : 'Next'}
-                  {currentStep !== steps.length - 1 && <ArrowRight size={16} className="ml-2" />}
-                </>
-              )}
-            </button>
-          </div>
+          {/* Navigation buttons - Hide for fear assessment step */}
+          {currentStep !== 4 && (
+            <div className="flex justify-between mt-8">
+              <button
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+                className={`flex items-center px-4 py-2 rounded ${
+                  currentStep === 0 
+                    ? 'opacity-50 cursor-not-allowed bg-gray-200 text-gray-500' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                Back
+              </button>
+              
+              <button
+                onClick={handleNext}
+                disabled={loading}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-4 w-4 mr-2 border-t-2 border-b-2 border-white rounded-full"></span>
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    {currentStep === steps.length - 1 ? 'Finish' : 'Next'}
+                    {currentStep !== steps.length - 1 && <ArrowRight size={16} className="ml-2" />}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

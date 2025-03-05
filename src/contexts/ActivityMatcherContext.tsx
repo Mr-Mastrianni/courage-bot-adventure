@@ -24,8 +24,6 @@ interface ActivityMatcherContextType {
   activeFilters: {
     fearCategories: FearCategory[];
     maxDifficulty: DifficultyLevel | null;
-    maxCost: CostRange | null;
-    locationIds: string[];
     maxTimeCommitment: TimeCommitment | null;
     indoorOutdoor: 'indoor' | 'outdoor' | 'both' | null;
   };
@@ -61,8 +59,6 @@ const defaultPreferences: ActivityPreferences = {
 const defaultFilters = {
   fearCategories: [],
   maxDifficulty: null,
-  maxCost: null,
-  locationIds: [],
   maxTimeCommitment: null,
   indoorOutdoor: null,
 };
@@ -236,16 +232,6 @@ export const ActivityMatcherProvider: React.FC<{ children: React.ReactNode }> = 
         filtered = filterActivitiesByMaxDifficulty(filtered, activeFilters.maxDifficulty);
       }
       
-      // Apply cost filter
-      if (activeFilters.maxCost) {
-        filtered = filterActivitiesByMaxCost(filtered, activeFilters.maxCost);
-      }
-      
-      // Apply location filters
-      if (activeFilters.locationIds.length > 0) {
-        filtered = filterActivitiesByLocation(filtered, activeFilters.locationIds);
-      }
-      
       // Apply time commitment filter
       if (activeFilters.maxTimeCommitment) {
         filtered = filterActivitiesByMaxTimeCommitment(filtered, activeFilters.maxTimeCommitment);
@@ -407,7 +393,6 @@ export const ActivityMatcherProvider: React.FC<{ children: React.ReactNode }> = 
         difficulty: 2,   // Difficulty level matches user's comfort
         location: 1.5,   // Location preference
         time: 1,         // Time commitment
-        cost: 1          // Cost range
       };
       
       // Calculate individual scores
@@ -431,11 +416,6 @@ export const ActivityMatcherProvider: React.FC<{ children: React.ReactNode }> = 
         ) ? 1 : 0;
       }
       
-      // Cost match with safe access
-      const activityCostRange = activity.costRange || 'medium';
-      const userCostRange = userPreferences.costRange || userPreferences.maxCost;
-      const costMatch = activityCostRange === userCostRange ? 1 : 0.5;
-      
       // Time commitment match with safe access
       const activityTimeCommitment = activity.timeCommitment || 'half_day';
       const userTimeCommitment = userPreferences.timeCommitment || userPreferences.maxTimeCommitment;
@@ -446,9 +426,8 @@ export const ActivityMatcherProvider: React.FC<{ children: React.ReactNode }> = 
         (fearScore * weights.fearMatch) +
         (difficultyMatch * weights.difficulty) +
         (locationMatch * weights.location) +
-        (costMatch * weights.cost) +
         (timeMatch * weights.time)
-      ) / (weights.fearMatch + weights.difficulty + weights.location + weights.cost + weights.time);
+      ) / (weights.fearMatch + weights.difficulty + weights.location + weights.time);
       
       // Normalize score to be between 0 and 1
       return Math.max(0, Math.min(1, score));

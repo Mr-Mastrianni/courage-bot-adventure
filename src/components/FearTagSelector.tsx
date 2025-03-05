@@ -8,6 +8,7 @@ interface FearTagSelectorProps {
 
 // Common fears people might want to overcome
 const commonFears = [
+  // Original fears
   'Public Speaking',
   'Heights',
   'Failure',
@@ -22,7 +23,29 @@ const commonFears = [
   'Change',
   'Being Alone',
   'Driving',
-  'Success'
+  'Success',
+  
+  // Adventure-related fears
+  'Extreme Heights',
+  'Deep Water',
+  'Wilderness Survival',
+  'Rock Climbing',
+  'Skydiving',
+  'Scuba Diving',
+  'White Water Rafting',
+  'Solo Travel',
+  'Camping Alone',
+  'Wildlife Encounters',
+  'Cliff Jumping',
+  'Zip Lining',
+  'Mountain Biking',
+  'Surfing',
+  'Bungee Jumping',
+  'Paragliding',
+  'Caving',
+  'Hiking Remote Trails',
+  'Extreme Weather',
+  'Off-Grid Living'
 ];
 
 const FearTagSelector: React.FC<FearTagSelectorProps> = ({ selectedFears, onChange }) => {
@@ -68,6 +91,17 @@ const FearTagSelector: React.FC<FearTagSelectorProps> = ({ selectedFears, onChan
       removeFear(selectedFears[selectedFears.length - 1]);
     }
   };
+
+  // Separate fears into categories for display
+  const adventureFears = commonFears.filter(fear => [
+    'Extreme Heights', 'Deep Water', 'Wilderness Survival', 'Rock Climbing', 
+    'Skydiving', 'Scuba Diving', 'White Water Rafting', 'Solo Travel',
+    'Cliff Jumping', 'Bungee Jumping', 'Paragliding'
+  ].includes(fear));
+  
+  const commonGeneralFears = commonFears.filter(fear => 
+    !adventureFears.includes(fear)
+  ).slice(0, 5);
 
   return (
     <div className="w-full">
@@ -116,12 +150,30 @@ const FearTagSelector: React.FC<FearTagSelectorProps> = ({ selectedFears, onChan
       <div className="mt-2">
         <p className="text-sm text-gray-500 mb-1">Common fears:</p>
         <div className="flex flex-wrap gap-1">
-          {commonFears.slice(0, 5).map((fear) => (
+          {commonGeneralFears.map((fear) => (
             !selectedFears.includes(fear) && (
               <button
                 key={fear}
                 type="button"
                 className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs text-gray-700"
+                onClick={() => addFear(fear)}
+              >
+                + {fear}
+              </button>
+            )
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2">
+        <p className="text-sm text-gray-500 mb-1">Adventure-related fears:</p>
+        <div className="flex flex-wrap gap-1">
+          {adventureFears.slice(0, 7).map((fear) => (
+            !selectedFears.includes(fear) && (
+              <button
+                key={fear}
+                type="button"
+                className="px-2 py-1 bg-green-50 hover:bg-green-100 rounded-full text-xs text-green-700"
                 onClick={() => addFear(fear)}
               >
                 + {fear}

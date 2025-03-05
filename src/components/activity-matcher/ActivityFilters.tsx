@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useActivityMatcher } from '@/contexts/ActivityMatcherContext';
-import { DifficultyLevel, FearCategory, CostRange, TimeCommitment } from '@/models/ActivityTypes';
-import { locations } from '@/data/activities';
+import { DifficultyLevel, FearCategory, TimeCommitment } from '@/models/ActivityTypes';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,14 +40,6 @@ const difficultyOptions: { value: DifficultyLevel; label: string }[] = [
   { value: 'intermediate', label: 'Intermediate' },
   { value: 'advanced', label: 'Advanced' },
   { value: 'extreme', label: 'Extreme' },
-];
-
-const costOptions: { value: CostRange; label: string }[] = [
-  { value: 'free', label: 'Free' },
-  { value: 'low', label: 'Low Cost ($)' },
-  { value: 'medium', label: 'Medium Cost ($$)' },
-  { value: 'high', label: 'High Cost ($$$)' },
-  { value: 'premium', label: 'Premium ($$$$)' },
 ];
 
 const timeCommitmentOptions: { value: TimeCommitment; label: string }[] = [
@@ -102,11 +93,6 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
     setActiveFilters({ maxDifficulty: difficulty });
   };
   
-  // Handle cost change
-  const handleCostChange = (cost: CostRange) => {
-    setActiveFilters({ maxCost: cost });
-  };
-  
   // Handle time commitment change
   const handleTimeCommitmentChange = (time: TimeCommitment) => {
     setActiveFilters({ maxTimeCommitment: time });
@@ -115,19 +101,6 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
   // Handle environment change
   const handleEnvironmentChange = (env: 'indoor' | 'outdoor' | 'both') => {
     setActiveFilters({ indoorOutdoor: env });
-  };
-  
-  // Handle location change
-  const handleLocationChange = (locationId: string, checked: boolean) => {
-    if (checked) {
-      setActiveFilters({
-        locationIds: [...activeFilters.locationIds, locationId]
-      });
-    } else {
-      setActiveFilters({
-        locationIds: activeFilters.locationIds.filter(id => id !== locationId)
-      });
-    }
   };
   
   // Handle reset
@@ -144,17 +117,10 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
     let count = 0;
     if (activeFilters.fearCategories.length > 0) count++;
     if (activeFilters.maxDifficulty) count++;
-    if (activeFilters.maxCost) count++;
-    if (activeFilters.locationIds.length > 0) count++;
     if (activeFilters.maxTimeCommitment) count++;
     if (activeFilters.indoorOutdoor) count++;
     return count;
   };
-  
-  // Get selected locations
-  const selectedLocations = Object.values(locations).filter(location => 
-    activeFilters.locationIds.includes(location.id)
-  );
   
   // Filter content
   const filterContent = (
@@ -177,7 +143,7 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
       </div>
       
       <ScrollArea className="flex-1 pr-4 -mr-4">
-        <Accordion type="multiple" defaultValue={['fear-categories', 'difficulty', 'cost']}>
+        <Accordion type="multiple" defaultValue={['fear-categories', 'difficulty']}>
           {/* Fear Categories */}
           <AccordionItem value="fear-categories">
             <AccordionTrigger>Fear Categories</AccordionTrigger>
@@ -221,34 +187,6 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
                       />
                       <Label 
                         htmlFor={`difficulty-${option.value}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        {option.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </RadioGroup>
-            </AccordionContent>
-          </AccordionItem>
-          
-          {/* Cost */}
-          <AccordionItem value="cost">
-            <AccordionTrigger>Cost</AccordionTrigger>
-            <AccordionContent>
-              <RadioGroup 
-                value={activeFilters.maxCost || ''} 
-                onValueChange={(value) => handleCostChange(value as CostRange)}
-              >
-                <div className="space-y-2">
-                  {costOptions.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-2">
-                      <RadioGroupItem 
-                        value={option.value} 
-                        id={`cost-${option.value}`} 
-                      />
-                      <Label 
-                        htmlFor={`cost-${option.value}`}
                         className="text-sm cursor-pointer"
                       >
                         {option.label}
@@ -315,34 +253,6 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
               </RadioGroup>
             </AccordionContent>
           </AccordionItem>
-          
-          {/* Locations */}
-          <AccordionItem value="locations">
-            <AccordionTrigger>Locations</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2">
-                {Object.values(locations).map((location) => (
-                  <div key={location.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`location-${location.id}`}
-                      checked={activeFilters.locationIds.includes(location.id)}
-                      onCheckedChange={(checked) => 
-                        handleLocationChange(location.id, checked as boolean)
-                      }
-                    />
-                    <Label 
-                      htmlFor={`location-${location.id}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {location.name}
-                      {location.country !== 'USA' && `, ${location.country}`}
-                      {location.country === 'USA' && location.state && `, ${location.state}`}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
         </Accordion>
       </ScrollArea>
       
@@ -400,90 +310,72 @@ const ActivityFilters: React.FC<ActivityFiltersProps> = ({
       
       {/* Display active filters */}
       {getActiveFilterCount() > 0 && (
-        <div className="flex flex-wrap gap-2 mt-4">
-          {activeFilters.fearCategories.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
-              onClick={() => setActiveFilters({ fearCategories: [] })}
-            >
-              Fear: {activeFilters.fearCategories.join(', ')}
-              <X size={12} />
-            </Button>
-          )}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {/* Fear Categories */}
+          {activeFilters.fearCategories.map((category) => {
+            const label = fearCategoryOptions.find(opt => opt.value === category)?.label || category;
+            return (
+              <Button
+                key={`filter-${category}`}
+                variant="secondary"
+                size="sm"
+                className="h-7 px-2 text-xs rounded-full bg-muted"
+                onClick={() => handleFearCategoryChange(category, false)}
+              >
+                {label}
+                <X size={14} className="ml-1" />
+              </Button>
+            );
+          })}
           
+          {/* Difficulty */}
           {activeFilters.maxDifficulty && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-full bg-muted"
               onClick={() => setActiveFilters({ maxDifficulty: null })}
             >
-              Difficulty: {difficultyOptions.find(o => o.value === activeFilters.maxDifficulty)?.label}
-              <X size={12} />
+              {difficultyOptions.find(opt => opt.value === activeFilters.maxDifficulty)?.label || activeFilters.maxDifficulty}
+              <X size={14} className="ml-1" />
             </Button>
           )}
           
-          {activeFilters.maxCost && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
-              onClick={() => setActiveFilters({ maxCost: null })}
-            >
-              Max Cost: {costOptions.find(o => o.value === activeFilters.maxCost)?.label}
-              <X size={12} />
-            </Button>
-          )}
-          
-          {selectedLocations.length > 0 && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
-              onClick={() => setActiveFilters({ locationIds: [] })}
-            >
-              {selectedLocations.length === 1 
-                ? `Location: ${selectedLocations[0].name}` 
-                : `Locations: ${selectedLocations.length}`}
-              <X size={12} />
-            </Button>
-          )}
-          
+          {/* Time Commitment */}
           {activeFilters.maxTimeCommitment && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-full bg-muted"
               onClick={() => setActiveFilters({ maxTimeCommitment: null })}
             >
-              Time: {timeCommitmentOptions.find(o => o.value === activeFilters.maxTimeCommitment)?.label}
-              <X size={12} />
+              {timeCommitmentOptions.find(opt => opt.value === activeFilters.maxTimeCommitment)?.label || activeFilters.maxTimeCommitment}
+              <X size={14} className="ml-1" />
             </Button>
           )}
           
+          {/* Environment */}
           {activeFilters.indoorOutdoor && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 px-2 text-xs rounded-full bg-muted"
               onClick={() => setActiveFilters({ indoorOutdoor: null })}
             >
-              {environmentOptions.find(o => o.value === activeFilters.indoorOutdoor)?.label}
-              <X size={12} />
+              {environmentOptions.find(opt => opt.value === activeFilters.indoorOutdoor)?.label || activeFilters.indoorOutdoor}
+              <X size={14} className="ml-1" />
             </Button>
           )}
           
+          {/* Clear All */}
           {getActiveFilterCount() > 1 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 gap-1 text-xs"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
               onClick={handleReset}
             >
               Clear All
-              <X size={12} />
             </Button>
           )}
         </div>

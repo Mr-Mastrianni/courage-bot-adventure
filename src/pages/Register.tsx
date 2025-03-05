@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, ArrowRight } from 'lucide-react';
 
 const Register = () => {
   const [fullName, setFullName] = useState('');
@@ -21,6 +21,8 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -63,10 +65,10 @@ const Register = () => {
       if (success) {
         toast({
           title: 'Registration successful',
-          description: 'Welcome to Be Courageous! We\'re preparing your onboarding process...',
+          description: 'Please check your email to confirm your account.',
         });
-        // Don't navigate here - let the auth state change handle it
-        // The auth listener will detect the new user flag and redirect
+        setRegisteredEmail(email);
+        setRegistrationComplete(true);
       } else {
         toast({
           title: 'Registration failed',
@@ -84,6 +86,63 @@ const Register = () => {
       setIsLoading(false);
     }
   };
+
+  // If registration is complete, show confirmation screen
+  if (registrationComplete) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="w-full max-w-md p-4">
+          <div className="text-center mb-8">
+            <Link to="/" className="inline-block">
+              <h1 className="text-3xl font-bold text-courage-800">Be Courageous</h1>
+            </Link>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl">Check Your Email</CardTitle>
+              <CardDescription>
+                We've sent a confirmation link to your email
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-center">
+              <div className="flex justify-center my-6">
+                <div className="bg-courage-100 p-4 rounded-full">
+                  <Mail className="h-12 w-12 text-courage-600" />
+                </div>
+              </div>
+              
+              <p>We've sent a confirmation email to:</p>
+              <p className="font-medium text-lg">{registeredEmail}</p>
+              
+              <div className="mt-6 text-sm text-gray-600">
+                <p>Please check your email and click the confirmation link to activate your account.</p>
+                <p className="mt-2">If you don't see the email, check your spam folder.</p>
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col">
+              <Button
+                onClick={() => navigate('/login')}
+                className="w-full mt-4 bg-courage-600 hover:bg-courage-700"
+              >
+                Go to Login
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <p className="mt-4 text-center text-sm text-gray-600">
+                Already confirmed?{' '}
+                <Link
+                  to="/login"
+                  className="font-medium text-courage-600 hover:text-courage-800"
+                >
+                  Log in
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

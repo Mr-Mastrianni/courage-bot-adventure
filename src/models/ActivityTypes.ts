@@ -1,6 +1,6 @@
 // Activity type definitions for the Courage Bot Adventure app
 
-export type FearCategory = 'heights' | 'water' | 'ocean' | 'falling' | 'speed' | 'animals' | 'social' | 'confined' | 'risk';
+export type FearCategory = 'heights' | 'water' | 'ocean' | 'falling' | 'speed' | 'animals' | 'social' | 'confined' | 'risk' | 'extreme_sports';
 
 export type DifficultyLevel = 'beginner' | 'easy' | 'moderate' | 'challenging' | 'difficult';
 

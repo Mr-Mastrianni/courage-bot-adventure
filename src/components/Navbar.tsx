@@ -41,12 +41,13 @@ const Navbar = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
+      // Navigation is already handled in the signOut function
       toast({
         title: "Signed out",
         description: "You have been successfully logged out.",
       });
-      navigate('/');
     } catch (error) {
+      console.error('Error in Navbar sign out:', error);
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",

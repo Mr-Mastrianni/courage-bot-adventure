@@ -19,6 +19,7 @@ import Profile from "./pages/Profile";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import ActivityExplorer from "./pages/ActivityExplorer";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,9 @@ const App = () => {
                     <Route path="/register" element={<Register />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    
+                    {/* Auth callback route for email confirmations */}
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                     
                     {/* Protected routes */}
                     <Route element={<ProtectedRoute />}>
